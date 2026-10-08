@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     display_name VARCHAR(100) NOT NULL,
     email VARCHAR(255),
     profile_image TEXT,
-    bio VARCHAR(255) DEFAULT 'Hey there! I am using Chaton.',
+    bio VARCHAR(255) DEFAULT 'Hey there! I am using Talk Cross.',
     online_status BOOLEAN DEFAULT FALSE,
     last_seen TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
