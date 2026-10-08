@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { query } from '../config/db.js';
+import { ENV } from '../config/env.js';
 import { DbUser } from '../types/index.js';
 
 const syncSchema = z.object({
@@ -153,4 +154,16 @@ export async function checkUsername(req: Request, res: Response): Promise<void> 
     console.error('Error checking username:', error);
     res.status(500).json({ error: 'Failed to check username availability' });
   }
+}
+
+export function getAuthConfig(_req: Request, res: Response): void {
+  // Returns client auth initialization config securely to frontend
+  res.json({
+    apiKey: ENV.FIREBASE_API_KEY,
+    authDomain: ENV.FIREBASE_AUTH_DOMAIN,
+    projectId: ENV.FIREBASE_PROJECT_ID,
+    storageBucket: ENV.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: ENV.FIREBASE_MESSAGING_SENDER_ID,
+    appId: ENV.FIREBASE_APP_ID,
+  });
 }
