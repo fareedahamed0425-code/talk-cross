@@ -62,6 +62,7 @@ export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string | null;
+  sender_name?: string;
   message_type: MessageType;
   content: string | null;
   media_url: string | null;

@@ -11,10 +11,62 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const COMMON_EMOJIS = [
-  '😊', '😂', '🔥', '❤️', '👍', '🎉', '✨', '🙌',
-  '😎', '😍', '🤔', '🥳', '🚀', '💯', '👏', '🙏',
-  '☕', '🍕', '🐱', '🐶', '👀', '💡', '🌟', '💪',
+const EMOJI_CATEGORIES = [
+  {
+    id: 'smileys',
+    name: 'Smileys',
+    icon: '😀',
+    emojis: [
+      '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇',
+      '🥰', '😍', '🤩', '😘', '😗', '😚', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗',
+      '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥',
+      '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶',
+      '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '😮', '😯',
+      '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣',
+      '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️',
+    ],
+  },
+  {
+    id: 'gestures',
+    name: 'Gestures',
+    icon: '👋',
+    emojis: [
+      '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙',
+      '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏',
+      '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶',
+      '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄',
+    ],
+  },
+  {
+    id: 'hearts',
+    name: 'Hearts',
+    icon: '❤️',
+    emojis: [
+      '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞',
+      '💓', '💗', '💖', '💘', '💝', '💟', '💌', '💍', '💎', '💐', '🌹', '🥀', '🌺',
+      '🌸', '🌼', '🌻', '✨', '⭐', '🌟', '💫', '🔥', '💥', '⚡', '🌈',
+    ],
+  },
+  {
+    id: 'activities',
+    name: 'Objects & Fun',
+    icon: '🎉',
+    emojis: [
+      '🎉', '🎊', '🎈', '🎂', '🎁', '🏆', '🥇', '🥈', '🥉', '🎯', '🚀', '✈️', '🚗',
+      '🚲', '💡', '🕯️', '🔔', '📢', '📣', '📱', '💻', '🖥️', '📷', '📸', '🎮', '🎧',
+      '🎵', '🎶', '☕', '🍵', '🍕', '🍔', '🍟', '🌮', '🍦', '🍫', '🍿', '🍻', '🥂',
+    ],
+  },
+  {
+    id: 'animals',
+    name: 'Animals & Nature',
+    icon: '🐱',
+    emojis: [
+      '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷',
+      '🐸', '🐵', '🐔', '🐧', '🐦', '🦆', '🦅', '🦉', '🐺', '🐗', '🐴', '🦄', '🐝',
+      '🐛', '🦋', '🐢', '🐍', '🐙', '🐬', '🐳', '🦈', '🐊', '🐅', '🐘', '🌴', '🍀',
+    ],
+  },
 ];
 
 export const ChatComposer: React.FC = () => {
@@ -30,8 +82,11 @@ export const ChatComposer: React.FC = () => {
   const { showToast } = useSocket();
 
   const [text, setText] = useState<string>('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [showStickerPicker, setShowStickerPicker] = useState<boolean>(false);
+  const [showPicker, setShowPicker] = useState<boolean>(false);
+  const [mainPickerTab, setMainPickerTab] = useState<'emoji' | 'sticker'>('emoji');
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>('smileys');
+  const [emojiSearchQuery, setEmojiSearchQuery] = useState<string>('');
+
   const [myStickers, setMyStickers] = useState<Sticker[]>([]);
   const [defaultStickers, setDefaultStickers] = useState<Sticker[]>([]);
   const [stickerTab, setStickerTab] = useState<'my' | 'default'>('my');
@@ -44,6 +99,20 @@ export const ChatComposer: React.FC = () => {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPicker]);
 
   // When edit mode is triggered, populate composer
   useEffect(() => {
@@ -62,6 +131,7 @@ export const ChatComposer: React.FC = () => {
   }, [text]);
 
   const loadStickers = async () => {
+    if (myStickers.length > 0 || defaultStickers.length > 0) return;
     try {
       setIsLoadingStickers(true);
       const res = await api.getStickers();
@@ -74,19 +144,11 @@ export const ChatComposer: React.FC = () => {
     }
   };
 
-  const toggleStickerPicker = () => {
-    if (!showStickerPicker) {
+  const togglePicker = () => {
+    if (!showPicker) {
       loadStickers();
-      setShowEmojiPicker(false);
     }
-    setShowStickerPicker(!showStickerPicker);
-  };
-
-  const toggleEmojiPicker = () => {
-    if (!showEmojiPicker) {
-      setShowStickerPicker(false);
-    }
-    setShowEmojiPicker(!showEmojiPicker);
+    setShowPicker(!showPicker);
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -106,8 +168,7 @@ export const ChatComposer: React.FC = () => {
     }
 
     setText('');
-    setShowEmojiPicker(false);
-    setShowStickerPicker(false);
+    setShowPicker(false);
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -127,10 +188,10 @@ export const ChatComposer: React.FC = () => {
   };
 
   const handleSendSticker = async (sticker: Sticker) => {
-    setShowStickerPicker(false);
+    setShowPicker(false);
     await sendMessage({
       messageType: 'sticker',
-      stickerId: sticker.is_default ? null : sticker.id,
+      stickerId: sticker.id,
       mediaUrl: sticker.storage_url,
     });
   };
@@ -139,12 +200,30 @@ export const ChatComposer: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'warning');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image file size must be under 10MB', 'warning');
+      return;
+    }
+
     setPendingImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPendingImagePreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPendingImagePreview(objectUrl);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCancelImage = () => {
+    if (pendingImagePreview) {
+      URL.revokeObjectURL(pendingImagePreview);
+    }
+    setPendingImageFile(null);
+    setPendingImagePreview(null);
   };
 
   const handleSendImageUpload = async () => {
@@ -152,34 +231,53 @@ export const ChatComposer: React.FC = () => {
 
     try {
       setIsUploadingImage(true);
-      const res = await api.uploadMedia(pendingImageFile, 'chat-media');
+      const res = await api.uploadMedia(pendingImageFile);
 
       await sendMessage({
         messageType: 'image',
         mediaUrl: res.url,
-        content: text.trim() || null,
+        content: text.trim() || undefined,
       });
 
-      setPendingImageFile(null);
-      setPendingImagePreview(null);
+      handleCancelImage();
       setText('');
     } catch (err: any) {
-      showToast(err.message || 'Image upload failed', 'warning');
+      showToast(err.message || 'Failed to upload photo', 'warning');
     } finally {
       setIsUploadingImage(false);
     }
   };
 
+  const handleEmojiClick = (emoji: string) => {
+    setText((prev) => prev + emoji);
+    textareaRef.current?.focus();
+  };
+
+  // Filter emojis based on search
+  const currentCategory = EMOJI_CATEGORIES.find((c) => c.id === activeEmojiCategory);
+  const displayedEmojis = emojiSearchQuery.trim()
+    ? EMOJI_CATEGORIES.flatMap((c) => c.emojis)
+    : currentCategory?.emojis || [];
+
   return (
     <div className="chat-composer">
-      {/* 1. Reply Preview Banner */}
+      {/* 1. Quoted Reply Bar */}
       {replyingTo && (
         <div className="reply-preview-bar">
           <div className="reply-preview-content">
-            <div style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>
-              Replying to {replyingTo.sender?.display_name || 'Friend'}
+            <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--burgundy-300)' }}>
+              Replying to {replyingTo.sender_name || 'Friend'}
             </div>
-            <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+            <div
+              style={{
+                fontSize: '12.5px',
+                color: 'var(--text-secondary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '400px',
+              }}
+            >
               {replyingTo.message_type === 'image'
                 ? '📷 Photo'
                 : replyingTo.message_type === 'sticker'
@@ -187,65 +285,67 @@ export const ChatComposer: React.FC = () => {
                 : replyingTo.content}
             </div>
           </div>
-          <button onClick={cancelReply} className="icon-btn" style={{ width: '28px', height: '28px' }}>
+          <button onClick={cancelReply} className="icon-btn" style={{ width: '26px', height: '26px' }}>
             <X size={15} />
           </button>
         </div>
       )}
 
-      {/* 2. Edit Preview Banner */}
+      {/* 2. Editing Message Bar */}
       {editingMessage && (
-        <div className="reply-preview-bar" style={{ borderLeftColor: '#f59e0b' }}>
+        <div
+          className="reply-preview-bar"
+          style={{ borderLeftColor: 'var(--primary)', backgroundColor: 'var(--bg-active)' }}
+        >
           <div className="reply-preview-content">
-            <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 600 }}>
-              Editing message
+            <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--burgundy-300)' }}>
+              Editing Message
             </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-              Press Enter to save, or cancel
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              Press Enter to save changes, Esc to cancel
             </div>
           </div>
-          <button onClick={cancelEdit} className="icon-btn" style={{ width: '28px', height: '28px' }}>
+          <button onClick={cancelEdit} className="icon-btn" style={{ width: '26px', height: '26px' }}>
             <X size={15} />
           </button>
         </div>
       )}
 
-      {/* 3. Image Upload Preview Dialog */}
+      {/* 3. Image Upload Preview Banner */}
       {pendingImagePreview && (
         <div
           style={{
-            padding: '12px',
-            backgroundColor: 'var(--bg-card)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '10px',
-            border: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
+            padding: '10px 14px',
+            backgroundColor: 'var(--bg-panel-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '8px',
           }}
         >
           <img
             src={pendingImagePreview}
-            alt="Upload preview"
-            style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px' }}
+            alt="Upload Preview"
+            style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }}
           />
-          <div style={{ flex: 1, fontSize: '13px', color: 'var(--text-secondary)' }}>
-            <div>Ready to send image</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {pendingImageFile?.name}
+            </div>
             <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
-              Add an optional caption below and click Send
+              {pendingImageFile ? `${(pendingImageFile.size / 1024).toFixed(1)} KB` : ''}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
-              className="btn-secondary"
-              onClick={() => {
-                setPendingImageFile(null);
-                setPendingImagePreview(null);
-              }}
-              disabled={isUploadingImage}
-              style={{ padding: '6px 10px', fontSize: '12px' }}
+              className="icon-btn"
+              onClick={handleCancelImage}
+              title="Cancel Upload"
+              style={{ width: '32px', height: '32px' }}
             >
-              Cancel
+              <X size={16} />
             </button>
             <button
               className="btn-primary"
@@ -259,155 +359,168 @@ export const ChatComposer: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Popover: Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="popover-panel">
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
-            QUICK EMOJIS
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '6px' }}>
-            {COMMON_EMOJIS.map((emoji, idx) => (
-              <button
-                key={idx}
-                onClick={() => setText((prev) => prev + emoji)}
-                style={{
-                  fontSize: '20px',
-                  padding: '6px',
-                  borderRadius: '6px',
-                  transition: 'transform 0.1s',
-                }}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 5. Popover: Sticker Picker */}
-      {showStickerPicker && (
-        <div className="popover-panel" style={{ width: '320px' }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '8px' }}>
+      {/* 4. Unified Emoji & Sticker Popover */}
+      {showPicker && (
+        <div ref={popoverRef} className="composer-popover-panel">
+          {/* Main Tabs: Emojis vs Stickers */}
+          <div className="picker-main-header">
             <button
-              onClick={() => setStickerTab('my')}
-              style={{
-                fontSize: '12px',
-                fontWeight: stickerTab === 'my' ? 600 : 400,
-                color: stickerTab === 'my' ? 'var(--primary)' : 'var(--text-muted)',
-              }}
+              type="button"
+              className={`picker-header-tab ${mainPickerTab === 'emoji' ? 'active' : ''}`}
+              onClick={() => setMainPickerTab('emoji')}
             >
-              My Stickers ({myStickers.length})
+              <Smile size={16} />
+              <span>Emojis</span>
             </button>
+
             <button
-              onClick={() => setStickerTab('default')}
-              style={{
-                fontSize: '12px',
-                fontWeight: stickerTab === 'default' ? 600 : 400,
-                color: stickerTab === 'default' ? 'var(--primary)' : 'var(--text-muted)',
+              type="button"
+              className={`picker-header-tab ${mainPickerTab === 'sticker' ? 'active' : ''}`}
+              onClick={() => {
+                setMainPickerTab('sticker');
+                loadStickers();
               }}
             >
-              Starter Pack ({defaultStickers.length})
+              <Sparkles size={16} />
+              <span>Stickers</span>
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
-            {isLoadingStickers ? (
-              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '16px', color: 'var(--text-muted)' }}>
-                Loading stickers...
+          {/* TAB 1: FULL EMOJI SELECTOR */}
+          {mainPickerTab === 'emoji' && (
+            <div className="emoji-section-wrap">
+              {/* Emoji Category Navigation */}
+              <div className="emoji-cat-bar">
+                {EMOJI_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`emoji-cat-btn ${activeEmojiCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveEmojiCategory(cat.id);
+                      setEmojiSearchQuery('');
+                    }}
+                    title={cat.name}
+                  >
+                    <span>{cat.icon}</span>
+                  </button>
+                ))}
               </div>
-            ) : (stickerTab === 'my' ? myStickers : defaultStickers).length === 0 ? (
-              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '12.5px' }}>
-                No stickers yet. Create some in Sticker Studio!
+
+              {/* Emoji Grid */}
+              <div className="emoji-grid-container">
+                {displayedEmojis.map((emoji, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleEmojiClick(emoji)}
+                    className="emoji-item-btn"
+                  >
+                    {emoji}
+                  </button>
+                ))}
               </div>
-            ) : (
-              (stickerTab === 'my' ? myStickers : defaultStickers).map((st) => (
-                <div
-                  key={st.id}
-                  onClick={() => handleSendSticker(st)}
-                  style={{
-                    cursor: 'pointer',
-                    padding: '6px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.15s, background-color 0.15s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            </div>
+          )}
+
+          {/* TAB 2: STICKERS */}
+          {mainPickerTab === 'sticker' && (
+            <div className="stickers-section-wrap">
+              <div className="sticker-sub-tabs">
+                <button
+                  type="button"
+                  onClick={() => setStickerTab('my')}
+                  className={`sticker-sub-tab ${stickerTab === 'my' ? 'active' : ''}`}
                 >
-                  <img
-                    src={st.storage_url}
-                    alt={st.name}
-                    style={{ width: '64px', height: '64px', objectFit: 'contain' }}
-                  />
-                </div>
-              ))
-            )}
-          </div>
+                  My Stickers ({myStickers.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStickerTab('default')}
+                  className={`sticker-sub-tab ${stickerTab === 'default' ? 'active' : ''}`}
+                >
+                  Starter Pack ({defaultStickers.length})
+                </button>
+              </div>
+
+              <div className="sticker-grid-container">
+                {isLoadingStickers ? (
+                  <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                    Loading stickers...
+                  </div>
+                ) : (stickerTab === 'my' ? myStickers : defaultStickers).length === 0 ? (
+                  <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '12.5px' }}>
+                    No custom stickers yet. Create some in Sticker Studio!
+                  </div>
+                ) : (
+                  (stickerTab === 'my' ? myStickers : defaultStickers).map((st) => (
+                    <div
+                      key={st.id}
+                      onClick={() => handleSendSticker(st)}
+                      className="sticker-pick-item"
+                    >
+                      <img src={st.storage_url} alt={st.name} className="sticker-pick-img" />
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 6. Composer Input Row */}
+      {/* 5. Minimal Integrated Sender Box */}
       <div className="composer-input-row">
-        {/* Emoji Button */}
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={toggleEmojiPicker}
-          title="Emoji Picker"
-          style={{ color: showEmojiPicker ? 'var(--primary)' : undefined }}
-        >
-          <Smile size={20} />
-        </button>
+        {/* Integrated Capsule containing Emoji trigger + Textarea + File attachment */}
+        <div className="composer-pill-box">
+          {/* Unified Emoji & Sticker Trigger Button inside Box */}
+          <button
+            type="button"
+            className="composer-inner-action-btn"
+            onClick={togglePicker}
+            title="Emojis & Stickers"
+            style={{ color: showPicker ? 'var(--primary)' : 'var(--text-secondary)' }}
+          >
+            <Smile size={20} />
+          </button>
 
-        {/* Sticker Button */}
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={toggleStickerPicker}
-          title="Stickers"
-          style={{ color: showStickerPicker ? 'var(--primary)' : undefined }}
-        >
-          <Sparkles size={20} />
-        </button>
+          {/* Text Area */}
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            rows={1}
+            className="composer-textarea-inner"
+          />
 
-        {/* Media / Photo Attachment Button */}
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={() => fileInputRef.current?.click()}
-          title="Attach Photo"
-        >
-          <Paperclip size={20} />
-        </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageSelect}
-          accept="image/*"
-          style={{ display: 'none' }}
-        />
+          {/* Media / Photo Attachment Button inside Box */}
+          <button
+            type="button"
+            className="composer-inner-action-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach Photo"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <Paperclip size={19} />
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageSelect}
+            accept="image/*"
+            style={{ display: 'none' }}
+          />
+        </div>
 
-        {/* Text Area */}
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          rows={1}
-          className="composer-textarea"
-        />
-
-        {/* Send Action */}
+        {/* Floating Send Button */}
         <button
           type="button"
           onClick={pendingImagePreview ? handleSendImageUpload : handleSend}
           disabled={!text.trim() && !pendingImagePreview}
           className="send-btn"
-          title="Send"
+          title="Send message"
         >
           <Send size={18} />
         </button>
@@ -415,3 +528,5 @@ export const ChatComposer: React.FC = () => {
     </div>
   );
 };
+
+export default ChatComposer;
