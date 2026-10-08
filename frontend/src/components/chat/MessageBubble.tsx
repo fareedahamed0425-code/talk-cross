@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { Message } from '../../types/index.js';
 import { formatMessageTime, getAvatarFallbackColor } from '../../utils/format.js';
-import { Check, CheckCheck, Reply, Edit3, Trash2, Copy, MoreHorizontal } from 'lucide-react';
+import { Reply, Edit3, Trash2, Copy, MoreHorizontal } from 'lucide-react';
+import { MessageStatusTicks } from './MessageStatusTicks.js';
 
 interface MessageBubbleProps {
   message: Message;
@@ -192,13 +193,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
           <span className="message-time">{formatMessageTime(message.created_at)}</span>
           {isSent && !isDeleted && (
             <span className="message-status">
-              {message.sending ? (
-                <span className="status-sending">...</span>
-              ) : message.is_read ? (
-                <CheckCheck size={14} color="#38bdf8" />
-              ) : (
-                <Check size={14} color="var(--text-muted)" />
-              )}
+              <MessageStatusTicks
+                sending={message.sending}
+                isRead={message.is_read}
+                size={16}
+                variant="bubble"
+              />
             </span>
           )}
         </div>

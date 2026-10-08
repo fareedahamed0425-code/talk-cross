@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { useChatPrivacy } from '../../utils/chatPrivacy.js';
 import { formatConversationTime, getAvatarFallbackColor, getInitials } from '../../utils/format.js';
+import { MessageStatusTicks } from '../chat/MessageStatusTicks.js';
 import { CreateGroupModal } from '../chat/CreateGroupModal.js';
 import { EmptyState } from '../common/EmptyState.js';
 import {
@@ -33,6 +35,7 @@ interface ContextMenuState {
 
 export const ConversationList: React.FC<ConversationListProps> = ({ onOpenSearch }) => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const { conversations, activeConversationId, selectConversation, isLoadingConversations } = useChat();
   const { isOnline, showToast } = useSocket();
   const privacy = useChatPrivacy();
@@ -227,23 +230,34 @@ export const ConversationList: React.FC<ConversationListProps> = ({ onOpenSearch
                           <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
                             This message was deleted
                           </span>
-                        ) : lastMsg.message_type === 'image' ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <ImageIcon size={13} /> Photo
-                          </span>
-                        ) : lastMsg.message_type === 'sticker' ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Smile size={13} /> Sticker
-                          </span>
                         ) : (
-                          <span>
-                            {isGroup && lastMsg.sender_name && (
-                              <b style={{ color: 'var(--burgundy-300)', fontWeight: 600 }}>
-                                {lastMsg.sender_name.split(' ')[0]}:{' '}
-                              </b>
+                          <>
+                            {lastMsg.sender_id === currentUser?.id && (
+                              <MessageStatusTicks
+                                isRead={conv.unread_count === 0}
+                                size={14}
+                                variant="sidebar"
+                              />
                             )}
-                            {lastMsg.content}
-                          </span>
+                            {lastMsg.message_type === 'image' ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <ImageIcon size={13} /> Photo
+                              </span>
+                            ) : lastMsg.message_type === 'sticker' ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Smile size={13} /> Sticker
+                              </span>
+                            ) : (
+                              <span className="conv-snippet-text">
+                                {isGroup && lastMsg.sender_name && (
+                                  <b style={{ color: 'var(--burgundy-300)', fontWeight: 600 }}>
+                                    {lastMsg.sender_name.split(' ')[0]}:{' '}
+                                  </b>
+                                )}
+                                {lastMsg.content}
+                              </span>
+                            )}
+                          </>
                         )
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
