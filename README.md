@@ -1,201 +1,263 @@
-# 💬 Chaton — Modern Real-Time Chatting Application
+<div align="center">
 
-**Chaton** is a modern, fast, private real-time messaging application designed with a focused communication interface (reminiscent of Telegram and WhatsApp). It provides rich instant messaging, friends and contacts management, live typing indicators, read receipts, media uploads, and a custom interactive **Sticker Studio**.
+# 💬 TALK CROSS
+### *Fast, Private & End-to-End Encrypted Real-Time Messaging*
+
+[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript_5.8-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite_6.4-646CFF?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![Neon PostgreSQL](https://img.shields.io/badge/Neon_PostgreSQL-00E599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
+[![Supabase](https://img.shields.io/badge/Supabase_Storage-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Firebase](https://img.shields.io/badge/Firebase_Auth-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![E2EE](https://img.shields.io/badge/Security-AES--256--GCM-881337?style=for-the-badge&logo=auth0&logoColor=white)](https://en.wikipedia.org/wiki/Galois/Counter_Mode)
+[![Timezone](https://img.shields.io/badge/Timezone-IST_(UTC%2B5:30)-FF9933?style=for-the-badge&logo=googleearth&logoColor=white)](https://en.wikipedia.org/wiki/Indian_Standard_Time)
+[![PWA Ready](https://img.shields.io/badge/PWA-Installable_App-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+
+<br/>
+
+<p align="center">
+  <b>Talk Cross</b> is a state-of-the-art real-time messaging application engineered with a focus on privacy, responsiveness, and refined aesthetics. Featuring client-side <b>End-to-End Encryption (AES-256-GCM)</b>, Pitch Black & Burgundy modular floating interface, real-time WebSockets, Indian Standard Time precision, and native PWA desktop/mobile installation.
+</p>
+
+[✨ Features](#-key-features) • [🏗️ Architecture](#️-system-architecture) • [🔒 Security & E2EE](#-end-to-end-encryption-e2ee) • [🗄️ Database](#️-database-schema) • [⚙️ Setup](#️-quick-start--local-setup) • [☁️ Deployment](#-deployment-guide)
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+</div>
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| **Frontend** | React 18, TypeScript, Vite, Custom CSS Design System | Responsive Desktop & Mobile messaging UI, Web Audio API sound feedback, Canvas sticker studio |
-| **Backend** | Node.js, Express, TypeScript, Socket.IO | REST API, WebSocket server, rate limiting, helmet security |
-| **Database** | **Neon PostgreSQL** | Normalized schema, relational data, messages, conversations, friendships, indexing |
-| **Media Storage** | **Supabase Storage** | Image attachments, avatars, custom sticker graphics |
-| **Authentication** | **Firebase Authentication** | Google OAuth popup sign-in, ID token verification via Firebase Admin |
-| **Deployment** | **Render** | Production Web Service deployment with zero-downtime health probes |
+## ✨ Key Features
+
+### 🔒 End-to-End Encryption (E2EE)
+- **AES-256-GCM Cryptographic Engine**: All message contents are encrypted directly in the browser using the Web Crypto API before transmission.
+- **Zero-Knowledge Storage**: Only ciphertexts (`enc:v1:<iv>:<ciphertext>`) traverse WebSockets and are stored in Neon PostgreSQL. Plaintext never touches servers or databases.
+
+### 🎨 Modular Floating Aesthetic & Theme System
+- **Individual Floating Cards**: Clean, floating panels without rigid horizontal dividing strips or bars.
+- **Dark Mode**: Full Pitch Black (`#000000`) background paired with rich, velvety Burgundy accents (`#881337` / `#9f1239`).
+- **Light Mode**: Crisp Pure White (`#ffffff`) with Burgundy highlights and live theme toggle switch.
+- **Adaptive Slim Chat Bubbles**: Bubbles hug the text snugly and adaptively resize with compact micro-timestamps.
+
+### 🇮🇳 Indian Standard Time (IST / Asia/Kolkata)
+- All message timestamps, conversation list previews, last-seen indicators, and date dividers format natively in **IST (UTC+5:30)**.
+
+### 📱 Progressive Web App (PWA)
+- Installable directly to desktop, iOS home screen, or Android as a standalone application.
+- Includes Web App Manifest, Service Worker caching, and an unobtrusive floating installation prompt.
+
+### ⚡ Real-Time WebSockets Engine
+- **Instant Messaging**: Real-time bi-directional message delivery with Socket.IO.
+- **Live Presence & Typing**: Real-time online/offline indicators and active typing feedback.
+- **Read Receipts**: Double tick indicators (`✓` sent, `✓✓` delivered/read) with instant status synchronization.
+- **Message Controls**: Edit sent messages with `(edited)` history tags, quote/reply, and soft deletion.
+
+### 🎨 Interactive Sticker Studio & Media
+- Upload images to an interactive canvas editor to crop, erase backgrounds, and create custom stickers saved directly to Supabase Storage.
+- Fast photo sharing with lightbox modal zoom and image preview.
+
+### 🔗 Deep-Linking & Protected Route System
+- Full React Router implementation with strict route guards:
+  - `/login` & `/auth`: Public-only entry points (authenticated users are auto-redirected to `/chat`).
+  - `/chat` & `/chat/:conversationId`: Protected direct conversation links.
+  - `/contacts`, `/requests`, `/search`, `/stickers`, `/profile`: Direct sub-routes.
+  - Zero unauthenticated jumping: Unauthorized attempts bounce straight to login.
 
 ---
 
-## 📂 Project Structure
+## 🏗️ System Architecture
 
-```text
-chaton/
-├── backend/
-│   ├── src/
-│   │   ├── config/          # DB connection pool (Neon), Firebase Admin, Supabase client, Env
-│   │   ├── db/              # schema.sql (PostgreSQL schema & indexes), migrate.ts runner
-│   │   ├── middleware/      # auth (Firebase ID token verification), upload (multer), error handler
-│   │   ├── controllers/     # auth, users, friends, conversations, messages, stickers, media
-│   │   ├── routes/          # Express REST routers
-│   │   ├── sockets/         # Socket.IO event handler & presence tracking
-│   │   ├── types/           # TypeScript interfaces
-│   │   └── index.ts         # Server entrypoint
-│   ├── .env.example
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── config/          # Firebase client config
-│   │   ├── context/         # AuthContext, SocketContext, ChatContext
-│   │   ├── services/        # API client, Web Audio API sound synthesizer
-│   │   ├── utils/           # Time formatting, color hashing, message grouping
-│   │   ├── components/      # Auth, Sidebar, Contacts, Requests, Search, StickersStudio, Profile, ChatArea, Composer
-│   │   ├── index.css        # Pure modern CSS design tokens & responsive styles
-│   │   └── main.tsx
-│   ├── .env.example
-│   └── package.json
-├── package.json             # Root monorepo scripts
-└── README.md
+```mermaid
+flowchart TD
+    subgraph Client["Frontend (React 18 + Vite)"]
+        UI["Modern Floating UI (Pitch Black & Burgundy)"]
+        CryptoEngine["Web Crypto API (AES-256-GCM)"]
+        Router["React Router (Sub-links & Route Guards)"]
+        PWA["PWA Service Worker & Manifest"]
+    end
+
+    subgraph Backend["Backend (Node.js + Express + Socket.IO)"]
+        API["REST API (/api)"]
+        SocketServer["Real-Time Socket Server"]
+        AuthMiddleware["Firebase Token Verification"]
+        ConfigServer["Centralized Auth Config Server"]
+    end
+
+    subgraph CloudServices["Cloud & Data Infrastructure"]
+        NeonDB[("Neon PostgreSQL\n(Encrypted Messages & Metadata)")]
+        SupabaseStorage[("Supabase Storage\n(Media & Stickers)")]
+        FirebaseAuth["Firebase Authentication\n(Google OAuth)"]
+    end
+
+    UI --> Router
+    UI --> CryptoEngine
+    CryptoEngine -->|Ciphertext| SocketServer
+    CryptoEngine -->|Ciphertext| API
+    API --> NeonDB
+    SocketServer --> NeonDB
+    API --> SupabaseStorage
+    AuthMiddleware --> FirebaseAuth
+    API --> ConfigServer
 ```
 
 ---
 
-## 🗄️ Database Schema (Neon PostgreSQL)
+## 🔒 End-to-End Encryption (E2EE)
 
-Chaton uses a normalized PostgreSQL schema designed for high-throughput real-time chats:
+Talk Cross implements cryptographic privacy using standard browser primitives:
 
-1. **`users`**: UUID primary key, `firebase_uid`, unique `@username`, display name, avatar, bio, online status, last seen.
-2. **`friend_requests`**: `sender_id`, `receiver_id`, status (`pending`, `accepted`, `rejected`), unique constraints to prevent duplicates.
-3. **`friendships`**: Symmetrical connected friend pairs `(user_id, friend_id)`.
-4. **`conversations`**: Conversation thread entities.
-5. **`conversation_members`**: Many-to-many relationship connecting users to conversations.
-6. **`messages`**: Text, image, sticker messages with support for replies (`reply_to_message_id`), edits, and soft deletes (`deleted_at`).
-7. **`message_reads`**: Per-user read receipt tracking `(message_id, user_id, read_at)`.
-8. **`stickers`**: Custom user-created stickers metadata and Supabase storage URLs.
-
-Indexes are created on `LOWER(username)`, `firebase_uid`, `(conversation_id, created_at DESC)`, and `(sender_id, status)`.
+```
+[Sender Browser]
+  Plaintext Message: "Hey! Let's catch up!"
+  Key Derivation: PBKDF2 with unique shared conversation salt
+  Cipher Algorithm: AES-256-GCM (12-byte IV + Auth Tag)
+  Payload: "enc:v1:9a8f7c...:d83e2a9b..."
+         │
+         ▼ (Sent over TLS & WebSockets)
+[Backend / Neon PostgreSQL]
+  Stores ONLY the ciphertext payload
+         │
+         ▼ (Delivered to Receiver)
+[Receiver Browser]
+  Decrypts ciphertext locally with derived conversation key
+  Displays: "Hey! Let's catch up!"
+```
 
 ---
 
-## ⚙️ Environment Variables Setup
+## 🗄️ Database Schema
 
-### 1. Backend (`backend/.env`)
+Talk Cross uses **Neon PostgreSQL** with indexed relational models:
 
-Copy `backend/.env.example` to `backend/.env`:
+```mermaid
+erDiagram
+    USERS ||--o{ CONVERSATION_MEMBERS : joins
+    USERS ||--o{ MESSAGES : sends
+    USERS ||--o{ FRIENDSHIPS : friends
+    USERS ||--o{ FRIEND_REQUESTS : requests
+    USERS ||--o{ STICKERS : creates
+    CONVERSATIONS ||--o{ CONVERSATION_MEMBERS : contains
+    CONVERSATIONS ||--o{ MESSAGES : has
+    MESSAGES ||--o{ MESSAGE_READS : tracks
+```
+
+| Table | Description |
+| :--- | :--- |
+| `users` | Primary user identity, unique `@username`, display name, avatar, bio, and online presence. |
+| `friend_requests` | Directional friend requests with statuses (`pending`, `accepted`, `rejected`). |
+| `friendships` | Symmetric bidirectional friendships. |
+| `conversations` | Conversation channels and last message activity. |
+| `conversation_members` | Many-to-many relationship mapping participants to conversations. |
+| `messages` | E2EE ciphertexts, message types (`text`, `image`, `sticker`), reply links, edit timestamps. |
+| `message_reads` | Read receipts tracking per-user read timestamps. |
+| `stickers` | Custom user-created stickers stored in Supabase Storage. |
+
+---
+
+## ⚙️ Quick Start & Local Setup
+
+### 1. Prerequisites
+- **Node.js** (v18 or higher)
+- **Neon PostgreSQL** database account
+- **Supabase** project (Storage enabled)
+- **Firebase** project (Google Authentication enabled)
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/fareedahamed0425-code/talk-cross.git
+cd talk-cross
+```
+
+### 3. Backend Configuration (`backend/.env`)
+Create `backend/.env` with your cloud credentials:
 
 ```env
 PORT=5000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 
-# 1. Neon PostgreSQL Database Connection String
-DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-example.us-east-2.aws.neon.tech/neondb?sslmode=require
+# 1. Neon PostgreSQL Database
+DATABASE_URL=postgresql://neondb_owner:PASSWORD@ep-example.neon.tech/neondb?sslmode=require
 
-# 2. Firebase Admin SDK (From Firebase Console -> Project Settings -> Service Accounts -> Generate New Private Key)
-FIREBASE_PROJECT_ID=your-firebase-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-firebase-project-id.iam.gserviceaccount.com
+# 2. Firebase Client Config (Served securely via GET /api/auth/config)
+FIREBASE_PROJECT_ID=talk-cross
+FIREBASE_API_KEY=your-firebase-api-key
+FIREBASE_AUTH_DOMAIN=talk-cross.firebaseapp.com
+FIREBASE_STORAGE_BUCKET=talk-cross.firebasestorage.app
+FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+FIREBASE_APP_ID=your-app-id
+
+# 3. Firebase Admin SDK
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@talk-cross.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-# 3. Supabase Storage (From Supabase -> Project Settings -> API)
+# 4. Supabase Storage
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-### 2. Frontend (`frontend/.env`)
-
-Copy `frontend/.env.example` to `frontend/.env`:
+### 4. Frontend Configuration (`frontend/.env`)
+The frontend only needs the backend API URL:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
-
-# Firebase Web Client (From Firebase Console -> Project Settings -> General -> Your apps -> Web app)
-VITE_FIREBASE_API_KEY=your-api-key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
-VITE_FIREBASE_APP_ID=1:123456789012:web:abcdef123456
+VITE_API_URL=http://localhost:5000
 ```
 
----
-
-## 🚀 Local Development
-
-### 1. Install Dependencies
-
-In the project root:
+### 5. Install & Run Migrations
 
 ```bash
-# Backend dependencies
-cd backend && npm install
-
-# Frontend dependencies
-cd ../frontend && npm install
-```
-
-### 2. Run Database Migrations
-
-Automatically create all tables, foreign keys, and indexes in your Neon database:
-
-```bash
+# Install backend dependencies & run database migration
+cd backend
+npm install
 npm run migrate
+
+# Install frontend dependencies
+cd ../frontend
+npm install
 ```
 
-### 3. Start Development Servers
-
-Start backend and frontend concurrently:
+### 6. Start Development Servers
 
 ```bash
-# Terminal 1: Backend (Runs on http://localhost:5000)
+# Terminal 1: Backend
 cd backend && npm run dev
 
-# Terminal 2: Frontend (Runs on http://localhost:3000)
+# Terminal 2: Frontend
 cd frontend && npm run dev
 ```
 
-Visit **http://localhost:3000** in your browser.
-
-> **💡 Instant Demo Sign-In:** In local development, you can sign in with Google or click the quick demo profile buttons (e.g. `@fareed` and `@rahul`) to immediately test two-user real-time chats across two browser tabs!
+Open **`http://localhost:3000`** in your browser to start messaging!
 
 ---
 
-## ☁️ Deployment on Render
+## ☁️ Deployment Guide
 
-### Backend Web Service Setup
-
-1. Push your code to your GitHub / GitLab repository.
-2. Log into [Render Dashboard](https://dashboard.render.com/) and click **New +** -> **Web Service**.
-3. Connect your repository.
-4. Set the following build and start configurations:
+### Backend Deployment (Render)
+1. In the [Render Dashboard](https://dashboard.render.com/), create a new **Web Service** and connect your repository.
+2. Configure settings:
    - **Root Directory:** `backend`
    - **Environment:** `Node`
    - **Build Command:** `npm install && npm run build`
    - **Start Command:** `npm run start`
    - **Health Check Path:** `/health`
-5. Under **Environment Variables**, add:
-   - `DATABASE_URL`: Your Neon PostgreSQL connection string.
-   - `FIREBASE_PROJECT_ID`: Firebase project ID.
-   - `FIREBASE_CLIENT_EMAIL`: Firebase service account email.
-   - `FIREBASE_PRIVATE_KEY`: Firebase service account private key (ensure newlines are preserved).
-   - `SUPABASE_URL`: Supabase URL.
-   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role secret.
-   - `FRONTEND_URL`: Your deployed frontend URL (e.g., `https://chaton.vercel.app` or Render static site).
-6. Click **Deploy Web Service**.
+3. Add all variables from `backend/.env` in the **Environment** tab.
+
+### Frontend Deployment (Vercel)
+1. Import your repository into [Vercel](https://vercel.com/).
+2. Set **Root Directory** to `frontend`.
+3. Under **Environment Variables**, add:
+   ```env
+   VITE_API_URL=https://your-talk-cross-backend.onrender.com
+   ```
+4. Deploy!
 
 ---
 
-## ✨ Features Checklist
+## 📄 License
 
-- [x] **Firebase Google Authentication** (OAuth popup with ID token backend verification)
-- [x] **Unique @Username System** with real-time uniqueness validation
-- [x] **Debounced User Search** with relationship status indicators
-- [x] **Friend Request System** (Send, Accept, Reject, Cancel, Reciprocal friendship creation)
-- [x] **Real-Time WebSockets / Socket.IO**:
-  - Instant message delivery
-  - Typing indicators
-  - Live online / offline presence tracking
-  - Multi-tab presence synchronization
-  - Message read receipts (`✓`, `✓✓`, blue `✓✓`)
-- [x] **Interactive Sticker Studio**:
-  - Upload image -> Crop / erase background on canvas -> Save to Supabase Storage -> Send in conversation
-- [x] **Media Attachments**:
-  - Send photos with instant preview and zoom modal
-- [x] **Message Interactions**:
-  - Reply to messages with context preview
-  - Edit sent messages with `(edited)` tag
-  - Soft delete messages
-  - Date dividers ("Today", "Yesterday", "Oct 8")
-- [x] **Mobile-First Responsive UX**:
-  - Fullscreen conversation transition with native-feeling back navigation on mobile
-- [x] **Zero-Dependency Audio Feedback**:
-  - Procedural Web Audio API sound chimes for sent messages, incoming chats, and friend requests
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+<div align="center">
+  <sub>Built with ❤️ for secure, modern, real-time communication.</sub>
+</div>
