@@ -4,6 +4,7 @@ import { Sidebar, SidebarTab } from '../sidebar/Sidebar.js';
 import { ChatArea } from '../chat/ChatArea.js';
 import { UsernameModal } from '../auth/UsernameModal.js';
 import { Toast } from '../common/Toast.js';
+import { InstallPrompt } from '../common/InstallPrompt.js';
 
 export const AppLayout: React.FC = () => {
   const { activeConversationId, selectConversation } = useChat();
@@ -43,9 +44,10 @@ export const AppLayout: React.FC = () => {
         />
       </div>
 
-      {/* Modal Dialogs & Toasts */}
+      {/* Modal Dialogs, Toasts & Install App Prompt */}
       <UsernameModal />
       <Toast />
+      <InstallPrompt />
     </div>
   );
 };
