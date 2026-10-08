@@ -54,6 +54,7 @@ export async function getConversationMessages(req: Request, res: Response): Prom
         m.reply_to_message_id,
         m.created_at,
         m.updated_at,
+        m.is_edited,
         m.deleted_at,
         -- Sender Info
         u.username AS sender_username,
@@ -117,6 +118,7 @@ export async function getConversationMessages(req: Request, res: Response): Prom
         : null,
       created_at: row.created_at,
       updated_at: row.updated_at,
+      is_edited: Boolean(row.is_edited),
       deleted_at: row.deleted_at,
       is_deleted: !!row.deleted_at,
       is_read: !!row.is_read,
@@ -277,6 +279,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
         reply_to_message: replyInfo,
         created_at: rawMsg.created_at,
         updated_at: rawMsg.updated_at,
+        is_edited: false,
         deleted_at: null,
         is_deleted: false,
         is_read: false,
@@ -360,9 +363,18 @@ export async function editMessage(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // 15-minute edit window (900,000 ms)
+    // The timer resets on every edit because updated_at is refreshed to NOW()
+    const lastActiveTime = new Date(msg.updated_at || msg.created_at).getTime();
+    const fifteenMinutesMs = 15 * 60 * 1000;
+    if (Date.now() - lastActiveTime > fifteenMinutesMs) {
+      res.status(400).json({ error: 'Message can no longer be edited (15 minute window expired)' });
+      return;
+    }
+
     const updateResult = await query(
       `UPDATE messages 
-       SET content = $1, updated_at = NOW()
+       SET content = $1, updated_at = NOW(), is_edited = TRUE
        WHERE id = $2
        RETURNING *`,
       [content.trim(), messageId]
@@ -378,10 +390,11 @@ export async function editMessage(req: Request, res: Response): Promise<void> {
         conversationId: msg.conversation_id,
         content: updated.content,
         updatedAt: updated.updated_at,
+        isEdited: true,
       });
     }
 
-    res.json({ message: updated });
+    res.json({ message: { ...updated, is_edited: true } });
   } catch (error) {
     console.error('Error editing message:', error);
     res.status(500).json({ error: 'Failed to edit message' });

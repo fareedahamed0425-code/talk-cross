@@ -288,7 +288,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const decContent = await decryptMessage(data.content, data.conversationId);
       if (data.conversationId === activeConvIdRef.current) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === data.messageId ? { ...m, content: decContent, updated_at: data.updatedAt } : m))
+          prev.map((m) => (m.id === data.messageId ? { ...m, content: decContent, updated_at: data.updatedAt, is_edited: true } : m))
         );
       }
     };

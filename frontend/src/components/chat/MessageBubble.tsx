@@ -45,6 +45,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
   const isImage = message.message_type === 'image';
   const isGroup = !!activeConversation?.is_group;
 
+  // Only display 'edited' badge if message was genuinely edited after sending
+  const isEdited = !isDeleted && (
+    message.is_edited === true ||
+    (Boolean(message.updated_at && message.created_at) &&
+      new Date(message.updated_at).getTime() - new Date(message.created_at).getTime() > 2000 &&
+      message.is_edited !== false)
+  );
+
+  // Check 15-minute edit window (timer resets on each edit as updated_at is refreshed)
+  // Window logic is internal without exposing any timer/countdown to the user
+  const lastActiveTimestamp = message.updated_at || message.created_at;
+  const isWithinEditWindow =
+    Date.now() - new Date(lastActiveTimestamp).getTime() <= 15 * 60 * 1000;
+  const canEdit = isSent && message.message_type === 'text' && !isDeleted && isWithinEditWindow;
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isDeleted) return;
     touchStartX.current = e.touches[0].clientX;
@@ -212,7 +227,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
 
         {/* Timestamp & Status Metadata */}
         <div className="message-meta">
-          {message.updated_at && !isDeleted && <span className="edited-badge">edited</span>}
+          {isEdited && <span className="edited-badge">edited</span>}
           <span className="message-time">{formatMessageTime(message.created_at)}</span>
           {isSent && !isDeleted && (
             <span className="message-status">
@@ -261,7 +276,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
               </button>
             )}
 
-            {isSent && message.message_type === 'text' && (
+            {canEdit && (
               <button className="bubble-menu-item" onClick={handleEdit}>
                 <Edit3 size={14} /> Edit
               </button>

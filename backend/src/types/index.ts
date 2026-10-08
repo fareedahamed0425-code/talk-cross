@@ -55,6 +55,7 @@ export interface DbMessage {
   reply_to_message_id: string | null;
   created_at: Date;
   updated_at: Date;
+  is_edited?: boolean;
   deleted_at: Date | null;
 }
 

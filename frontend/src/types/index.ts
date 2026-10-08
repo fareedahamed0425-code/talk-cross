@@ -79,6 +79,7 @@ export interface Message {
   } | null;
   created_at: string;
   updated_at: string;
+  is_edited?: boolean;
   deleted_at: string | null;
   is_deleted: boolean;
   is_read: boolean;

@@ -87,8 +87,12 @@ CREATE TABLE IF NOT EXISTS messages (
     reply_to_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    is_edited BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMPTZ
 );
+
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE;
+
 
 -- 8. MESSAGE READS TABLE
 CREATE TABLE IF NOT EXISTS message_reads (
