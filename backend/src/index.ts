@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 import { ENV } from './config/env.js';
@@ -70,10 +71,21 @@ app.use('/api', limiter);
 
 // Serve local uploads folder (dev fallback)
 const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+} catch (err) {
+  // Fallback to os tmpdir in containerized/restricted permission environments
+  try {
+    const tmpUploads = path.join(os.tmpdir(), 'talkcross_uploads');
+    if (!fs.existsSync(tmpUploads)) {
+      fs.mkdirSync(tmpUploads, { recursive: true });
+    }
+    app.use('/uploads', express.static(tmpUploads));
+  } catch {}
 }
-app.use('/uploads', express.static(uploadsDir));
 
 // Health Check Endpoint for Render / Load Balancers
 app.get('/health', (_req, res) => {
