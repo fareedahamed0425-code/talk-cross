@@ -6,9 +6,11 @@ import conversationsRoutes from './conversationsRoutes.js';
 import messagesRoutes from './messagesRoutes.js';
 import stickersRoutes from './stickersRoutes.js';
 import mediaRoutes from './mediaRoutes.js';
+import healthRoutes from './healthRoutes.js';
 
 const router = Router();
 
+router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
 router.use('/friends', friendsRoutes);
@@ -18,3 +20,4 @@ router.use('/stickers', stickersRoutes);
 router.use('/media', mediaRoutes);
 
 export default router;
+

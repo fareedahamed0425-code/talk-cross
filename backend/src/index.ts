@@ -13,6 +13,8 @@ import { runMigrations } from './db/migrate.js';
 import { initSocketIO } from './sockets/socketHandler.js';
 import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.js';
+import { getHealthCheck } from './controllers/healthController.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,13 +101,8 @@ app.get('/', (_req, res) => {
 });
 
 // Health Check Endpoint for Render / Load Balancers
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
+app.get('/health', getHealthCheck);
+
 
 // Mount Main API Router
 app.use('/api', apiRouter);
