@@ -47,6 +47,8 @@
   --bg-panel: #0a0a0a;
   --bg-panel-secondary: #121212;
   --bg-panel-elevated: #161616;
+  --bg-card: #141416;
+  --bg-sidebar: #0a0a0a;
   --bg-input: #0e0e0e;
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-active: rgba(159, 18, 57, 0.18);
@@ -85,6 +87,8 @@
   --bg-panel: #ffffff;
   --bg-panel-secondary: #fafafa;
   --bg-panel-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-sidebar: #fafafa;
   --bg-input: #f4f4f5;
   --bg-hover: rgba(0, 0, 0, 0.04);
   --bg-active: rgba(159, 18, 57, 0.1);
@@ -925,22 +929,132 @@ input:focus, textarea:focus {
   }
 }
 
-/* Message Actions Trigger */
-.msg-actions-trigger {
+/* Message Bubble Action Menu & Trigger */
+.bubble-action-btn {
   opacity: 0;
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.45);
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-full);
-  color: white;
-  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
 }
 
-.message-bubble:hover .msg-actions-trigger {
+.message-row.sent .bubble-action-btn {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.message-bubble:hover .bubble-action-btn,
+.message-bubble:focus-within .bubble-action-btn,
+.bubble-action-btn.active {
   opacity: 1;
+}
+
+.bubble-action-btn:hover {
+  background: var(--burgundy-primary);
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Frosted Glass Context Menu Dropdown */
+.bubble-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 50;
+  min-width: 140px;
+  background-color: rgba(18, 18, 22, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: bubbleMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top;
+  user-select: none;
+}
+
+[data-theme='light'] .bubble-menu-dropdown {
+  background-color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes bubbleMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.bubble-menu-item {
+  padding: 7px 11px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 6px;
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.bubble-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+[data-theme='light'] .bubble-menu-item {
+  color: #18181b;
+}
+
+[data-theme='light'] .bubble-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: #000000;
+}
+
+.bubble-menu-item.danger {
+  color: #fb7185;
+}
+
+.bubble-menu-item.danger:hover {
+  background-color: rgba(244, 63, 94, 0.18);
+  color: #f43f5e;
+}
+
+[data-theme='light'] .bubble-menu-item.danger {
+  color: #e11d48;
+}
+
+[data-theme='light'] .bubble-menu-item.danger:hover {
+  background-color: #ffe4e6;
+  color: #be123c;
 }
 
 /* Typing Indicator */

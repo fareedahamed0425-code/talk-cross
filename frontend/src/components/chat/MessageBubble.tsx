@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { Message } from '../../types/index.js';
@@ -15,6 +15,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
   const { user } = useAuth();
   const { activeConversation, startReply, startEdit, deleteMessage } = useChat();
   const [showMenu, setShowMenu] = useState<boolean>(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick);
+    };
+  }, [showMenu]);
 
   // Mobile Swipe-to-Reply touch gesture state
   const touchStartX = useRef<number>(0);
@@ -206,12 +223,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         {/* Action Trigger Menu Button */}
         {!isDeleted && (
           <button
-            className="bubble-action-btn"
+            className={`bubble-action-btn ${showMenu ? 'active' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
             title="Message options"
+            aria-label="Message options"
           >
             <MoreHorizontal size={14} />
           </button>
@@ -220,94 +238,31 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         {/* Context Menu Dropdown */}
         {showMenu && (
           <div
+            ref={menuRef}
             className="bubble-menu-dropdown"
             style={{
-              position: 'absolute',
-              top: '24px',
               right: isSent ? '0' : 'auto',
               left: isSent ? 'auto' : '0',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: 'var(--shadow-lg)',
-              padding: '4px',
-              zIndex: 30,
-              minWidth: '120px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2px',
             }}
           >
-            <button
-              onClick={handleReply}
-              style={{
-                padding: '6px 10px',
-                fontSize: '12.5px',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '4px',
-                width: '100%',
-                justifyContent: 'flex-start',
-              }}
-            >
+            <button className="bubble-menu-item" onClick={handleReply}>
               <Reply size={14} /> Reply
             </button>
 
             {message.content && (
-              <button
-                onClick={handleCopy}
-                style={{
-                  padding: '6px 10px',
-                  fontSize: '12.5px',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  borderRadius: '4px',
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                }}
-              >
+              <button className="bubble-menu-item" onClick={handleCopy}>
                 <Copy size={14} /> Copy
               </button>
             )}
 
             {isSent && message.message_type === 'text' && (
-              <button
-                onClick={handleEdit}
-                style={{
-                  padding: '6px 10px',
-                  fontSize: '12.5px',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  borderRadius: '4px',
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                }}
-              >
+              <button className="bubble-menu-item" onClick={handleEdit}>
                 <Edit3 size={14} /> Edit
               </button>
             )}
 
             {isSent && (
-              <button
-                onClick={handleDelete}
-                style={{
-                  padding: '6px 10px',
-                  fontSize: '12.5px',
-                  color: 'var(--danger)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  borderRadius: '4px',
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                }}
-              >
+              <button className="bubble-menu-item danger" onClick={handleDelete}>
                 <Trash2 size={14} /> Delete
               </button>
             )}
@@ -317,3 +272,4 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
     </div>
   );
 };
+
