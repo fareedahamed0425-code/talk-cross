@@ -87,6 +87,17 @@ try {
   } catch {}
 }
 
+// Root Welcome Endpoint
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    service: 'Talk Cross Backend API',
+    status: 'online',
+    version: '1.0.0',
+    healthCheck: '/health',
+    repository: 'https://github.com/fareedahamed0425-code/talk-cross',
+  });
+});
+
 // Health Check Endpoint for Render / Load Balancers
 app.get('/health', (_req, res) => {
   res.status(200).json({
