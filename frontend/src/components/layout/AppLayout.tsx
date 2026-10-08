@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext.js';
 import { Sidebar, SidebarTab } from '../sidebar/Sidebar.js';
 import { ChatArea } from '../chat/ChatArea.js';
@@ -7,17 +8,56 @@ import { Toast } from '../common/Toast.js';
 import { InstallPrompt } from '../common/InstallPrompt.js';
 
 export const AppLayout: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { conversationId } = useParams<{ conversationId?: string }>();
   const { activeConversationId, selectConversation } = useChat();
-  const [activeTab, setActiveTab] = useState<SidebarTab>('chats');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+
+  // Derive active tab from current URL pathname
+  const getTabFromPath = (pathname: string): SidebarTab => {
+    if (pathname.startsWith('/contacts')) return 'contacts';
+    if (pathname.startsWith('/requests')) return 'requests';
+    if (pathname.startsWith('/search')) return 'search';
+    if (pathname.startsWith('/stickers')) return 'stickers';
+    if (pathname.startsWith('/profile')) return 'profile';
+    return 'chats';
+  };
+
+  const activeTab = getTabFromPath(location.pathname);
+
+  // Synchronize conversation from route param
+  useEffect(() => {
+    if (conversationId && conversationId !== activeConversationId) {
+      selectConversation(conversationId);
+    }
+  }, [conversationId, activeConversationId, selectConversation]);
+
+  const handleTabChange = (tab: SidebarTab) => {
+    if (tab === 'chats') {
+      if (activeConversationId) {
+        navigate(`/chat/${activeConversationId}`);
+      } else {
+        navigate('/chat');
+      }
+    } else {
+      navigate(`/${tab}`);
+    }
+  };
 
   const handleBackMobile = () => {
     selectConversation(null);
+    navigate('/chat');
   };
 
   const handleOpenChat = (convId: string) => {
-    setActiveTab('chats');
     selectConversation(convId);
+    navigate(`/chat/${convId}`);
+  };
+
+  const handleOpenSearch = () => {
+    navigate('/search');
+    setIsSidebarCollapsed(false);
   };
 
   return (
@@ -25,7 +65,7 @@ export const AppLayout: React.FC = () => {
       {/* Sidebar (Navigation Rail + Collapsible Panel) */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onOpenChat={handleOpenChat}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -35,10 +75,7 @@ export const AppLayout: React.FC = () => {
       <div className={`chat-area-wrap ${!activeConversationId ? 'hidden-mobile' : ''}`}>
         <ChatArea
           onBackMobile={activeConversationId ? handleBackMobile : undefined}
-          onOpenSearch={() => {
-            setActiveTab('search');
-            setIsSidebarCollapsed(false);
-          }}
+          onOpenSearch={handleOpenSearch}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
@@ -51,3 +88,5 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+
+export default AppLayout;

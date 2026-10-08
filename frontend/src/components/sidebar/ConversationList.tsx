@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { formatConversationTime, getAvatarFallbackColor, getInitials } from '../../utils/format.js';
@@ -10,6 +11,7 @@ interface ConversationListProps {
 }
 
 export const ConversationList: React.FC<ConversationListProps> = ({ onOpenSearch }) => {
+  const navigate = useNavigate();
   const { conversations, activeConversationId, selectConversation, isLoadingConversations } = useChat();
   const { isOnline } = useSocket();
   const [filterText, setFilterText] = useState<string>('');
@@ -69,7 +71,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({ onOpenSearch
               <div
                 key={conv.id}
                 className={`conv-item ${isActive ? 'active' : ''}`}
-                onClick={() => selectConversation(conv.id)}
+                onClick={() => {
+                  selectConversation(conv.id);
+                  navigate(`/chat/${conv.id}`);
+                }}
               >
                 {/* Avatar */}
                 <div className="conv-avatar-wrap">
