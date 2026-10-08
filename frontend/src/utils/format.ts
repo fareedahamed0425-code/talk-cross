@@ -1,61 +1,71 @@
+// ==========================================================================
+// INDIAN STANDARD TIME (IST - Asia/Kolkata / UTC+5:30) TIME FORMATTER
+// ==========================================================================
+
+const IST_TIMEZONE = 'Asia/Kolkata';
+
 export function formatMessageTime(dateString: string | Date): string {
   const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  return date.toLocaleTimeString('en-IN', {
+    timeZone: IST_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 export function formatConversationTime(dateString: string | Date): string {
   const date = new Date(dateString);
   const now = new Date();
 
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
+  // Convert to IST date strings for exact same-day comparison
+  const istDateStr = date.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
+  const istNowStr = now.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
 
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  if (istDateStr === istNowStr) {
+    return date.toLocaleTimeString('en-IN', {
+      timeZone: IST_TIMEZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
   }
 
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const istYesterdayStr = yesterday.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
 
-  if (isYesterday) {
+  if (istDateStr === istYesterdayStr) {
     return 'Yesterday';
   }
 
-  const isThisYear = date.getFullYear() === now.getFullYear();
-  if (isThisYear) {
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
-
-  return date.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: '2-digit' });
+  return date.toLocaleDateString('en-IN', {
+    timeZone: IST_TIMEZONE,
+    day: 'numeric',
+    month: 'short',
+  });
 }
 
 export function formatDateDivider(dateString: string | Date): string {
   const date = new Date(dateString);
   const now = new Date();
 
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
+  const istDateStr = date.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
+  const istNowStr = now.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
 
-  if (isToday) return 'Today';
+  if (istDateStr === istNowStr) return 'Today (IST)';
 
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const istYesterdayStr = yesterday.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE });
 
-  if (isYesterday) return 'Yesterday';
+  if (istDateStr === istYesterdayStr) return 'Yesterday';
 
-  return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-IN', {
+    timeZone: IST_TIMEZONE,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export function formatLastSeen(lastSeenString: string | Date, isOnline: boolean): string {
@@ -72,16 +82,16 @@ export function formatLastSeen(lastSeenString: string | Date, isOnline: boolean)
   if (diffMinutes < 1) return 'Last seen just now';
   if (diffMinutes < 60) return `Last seen ${diffMinutes}m ago`;
   if (diffHours < 24) return `Last seen ${diffHours}h ago`;
-  if (diffDays === 1) return `Last seen yesterday at ${formatMessageTime(date)}`;
+  if (diffDays === 1) return `Last seen yesterday at ${formatMessageTime(date)} IST`;
   if (diffDays < 7) return `Last seen ${diffDays}d ago`;
 
-  return `Last seen on ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+  return `Last seen on ${date.toLocaleDateString('en-IN', { timeZone: IST_TIMEZONE, month: 'short', day: 'numeric' })} at ${formatMessageTime(date)} IST`;
 }
 
 export function getAvatarFallbackColor(name: string): string {
   const colors = [
-    '#0ea5e9', '#06b6d4', '#10b981', '#6366f1',
-    '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
+    '#800020', '#9f1239', '#881337', '#be123c',
+    '#e11d48', '#a21caf', '#7c2d12', '#4c0519',
   ];
   let hash = 0;
   for (let i = 0; i < (name || '').length; i++) {

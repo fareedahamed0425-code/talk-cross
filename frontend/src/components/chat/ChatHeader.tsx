@@ -82,8 +82,26 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
       </div>
 
-      {/* Action Icons */}
+      {/* Action Icons & E2EE Badge */}
       <div className="chat-header-actions">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-full)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+          }}
+          title="Messages are protected with End-to-End Encryption (AES-256-GCM). No plaintext is ever stored in the database."
+        >
+          <span>🔒 E2EE Active</span>
+        </div>
+
         <div
           style={{
             fontSize: '12.5px',

@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext.js';
 import { useSocket } from './SocketContext.js';
 import { api } from '../services/api.js';
 import { sounds } from '../services/audio.js';
+import { encryptMessage, decryptMessage } from '../utils/crypto.js';
 import { Conversation, Message, MessageType } from '../types/index.js';
 
 interface ChatContextType {
@@ -55,13 +56,46 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const activeConvIdRef = useRef<string | null>(null);
   activeConvIdRef.current = activeConversationId;
 
+  // Helper: Decrypt array of messages in a conversation
+  const decryptMessagesList = async (rawMessages: Message[], convId: string): Promise<Message[]> => {
+    return Promise.all(
+      rawMessages.map(async (msg) => {
+        if (msg.content && !msg.is_deleted) {
+          const decrypted = await decryptMessage(msg.content, convId);
+          return { ...msg, content: decrypted };
+        }
+        return msg;
+      })
+    );
+  };
+
+  // Helper: Decrypt conversation snippet
+  const decryptConversationList = async (convList: Conversation[]): Promise<Conversation[]> => {
+    return Promise.all(
+      convList.map(async (conv) => {
+        if (conv.last_message?.content && !conv.last_message.is_deleted) {
+          const dec = await decryptMessage(conv.last_message.content, conv.id);
+          return {
+            ...conv,
+            last_message: {
+              ...conv.last_message,
+              content: dec,
+            },
+          };
+        }
+        return conv;
+      })
+    );
+  };
+
   // Fetch all conversations
   const refreshConversations = useCallback(async () => {
     if (!user) return;
     try {
       setIsLoadingConversations(true);
       const res = await api.getConversations();
-      setConversations(res.conversations);
+      const decryptedConvs = await decryptConversationList(res.conversations);
+      setConversations(decryptedConvs);
     } catch (err) {
       console.error('Failed to load conversations:', err);
     } finally {
@@ -92,8 +126,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setIsLoadingMessages(true);
         const res = await api.getMessages(activeConversationId);
+        const decrypted = await decryptMessagesList(res.messages, activeConversationId);
         if (isMounted) {
-          setMessages(res.messages);
+          setMessages(decrypted);
           setHasMoreMessages(res.hasMore);
 
           // Mark conversation as read locally in conversation list
@@ -128,13 +163,19 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewMessage = (msg: Message) => {
+    const handleNewMessage = async (msg: Message) => {
+      // Decrypt message content in real-time
+      let decryptedContent = msg.content;
+      if (msg.content && !msg.is_deleted) {
+        decryptedContent = await decryptMessage(msg.content, msg.conversation_id);
+      }
+      const decryptedMsg = { ...msg, content: decryptedContent };
+
       // If message belongs to active conversation
       if (msg.conversation_id === activeConvIdRef.current) {
         setMessages((prev) => {
-          // Prevent duplicates if already added optimistically
           if (prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          return [...prev, decryptedMsg];
         });
 
         // If sent by other user, play sound & mark read
@@ -160,7 +201,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ...prev[existingIdx],
             last_message: {
               id: msg.id,
-              content: msg.content,
+              content: decryptedContent,
               message_type: msg.message_type,
               sender_id: msg.sender_id,
               created_at: msg.created_at,
@@ -173,17 +214,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const remaining = prev.filter((_, idx) => idx !== existingIdx);
           return [updatedConv, ...remaining];
         } else {
-          // If conversation not in list yet, refresh full list
           refreshConversations();
           return prev;
         }
       });
     };
 
-    const handleMessageEdited = (data: { messageId: string; conversationId: string; content: string; updatedAt: string }) => {
+    const handleMessageEdited = async (data: { messageId: string; conversationId: string; content: string; updatedAt: string }) => {
+      const decContent = await decryptMessage(data.content, data.conversationId);
       if (data.conversationId === activeConvIdRef.current) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === data.messageId ? { ...m, content: data.content, updated_at: data.updatedAt } : m))
+          prev.map((m) => (m.id === data.messageId ? { ...m, content: decContent, updated_at: data.updatedAt } : m))
         );
       }
     };
@@ -249,7 +290,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const oldestMessage = messages[0];
       const res = await api.getMessages(activeConversationId, oldestMessage.created_at);
-      setMessages((prev) => [...res.messages, ...prev]);
+      const decrypted = await decryptMessagesList(res.messages, activeConversationId);
+      setMessages((prev) => [...decrypted, ...prev]);
       setHasMoreMessages(res.hasMore);
     } catch (err) {
       console.error('Failed to load more messages:', err);
@@ -268,10 +310,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     emitTyping(false);
 
     try {
+      // Encrypt message content with AES-256-GCM before sending over the wire
+      let encryptedContent = payload.content;
+      if (payload.content) {
+        encryptedContent = await encryptMessage(payload.content, activeConversationId);
+      }
+
       await api.sendMessage({
         conversationId: activeConversationId,
         messageType: payload.messageType,
-        content: payload.content,
+        content: encryptedContent,
         mediaUrl: payload.mediaUrl,
         stickerId: payload.stickerId,
         replyToMessageId: replyingTo ? replyingTo.id : null,
@@ -285,8 +333,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const editMessage = async (messageId: string, newContent: string) => {
+    if (!activeConversationId) return;
     try {
-      await api.editMessage(messageId, newContent);
+      const encrypted = await encryptMessage(newContent, activeConversationId);
+      await api.editMessage(messageId, encrypted);
       setEditingMessage(null);
     } catch (err: any) {
       console.error('Failed to edit message:', err);
