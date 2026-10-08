@@ -20,6 +20,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  MonitorDown,
 } from 'lucide-react';
 
 export type SidebarTab = 'chats' | 'contacts' | 'requests' | 'search' | 'stickers' | 'profile';
@@ -162,6 +163,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Desktop Bottom Actions */}
         <div className="nav-rail-bottom desktop-only-flex">
+          {/* Install App button */}
+          <button
+            className="nav-item"
+            onClick={() => {
+              const promptEvent = (window as any).deferredInstallPrompt;
+              if (promptEvent) {
+                promptEvent.prompt();
+              } else {
+                alert("To install Talk Cross, click the install icon in your browser's address bar or use Chrome/Edge Menu > Install Talk Cross.");
+              }
+            }}
+            title="Install Talk Cross App"
+            style={{ color: 'var(--burgundy-vibrant)' }}
+          >
+            <MonitorDown size={20} />
+          </button>
+
           {/* Collapse Sidebar Toggle */}
           <button
             className="nav-item"

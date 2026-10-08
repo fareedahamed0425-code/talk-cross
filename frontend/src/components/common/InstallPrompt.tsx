@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Share } from 'lucide-react';
+import { MonitorDown, X, Download, Share } from 'lucide-react';
 
 export const InstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -19,7 +19,10 @@ export const InstallPrompt: React.FC = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show install prompt banner
+      // Expose to window for global access
+      (window as any).deferredInstallPrompt = e;
+      
+      // Show install prompt banner if not previously dismissed
       const dismissed = localStorage.getItem('talkcross_install_dismissed');
       if (!dismissed) {
         setShowPrompt(true);
@@ -42,13 +45,15 @@ export const InstallPrompt: React.FC = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+    const promptEvent = deferredPrompt || (window as any).deferredInstallPrompt;
+    if (promptEvent) {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
       if (outcome === 'accepted') {
         setShowPrompt(false);
       }
       setDeferredPrompt(null);
+      (window as any).deferredInstallPrompt = null;
     } else if (isIOS) {
       setShowIOSTip(true);
     }
@@ -66,58 +71,79 @@ export const InstallPrompt: React.FC = () => {
     <div
       style={{
         position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 999,
+        bottom: '24px',
+        right: '24px',
+        zIndex: 9999,
         backgroundColor: 'var(--bg-panel)',
-        border: '1px solid rgba(225, 29, 72, 0.3)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '12px 16px',
-        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(159, 18, 57, 0.25)',
+        border: '1px solid rgba(225, 29, 72, 0.4)',
+        borderRadius: '16px',
+        padding: '14px 18px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(159, 18, 57, 0.3)',
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
-        maxWidth: '360px',
-        backdropFilter: 'blur(16px)',
-        animation: 'slideUp 0.3s ease',
+        gap: '14px',
+        maxWidth: '380px',
+        backdropFilter: 'blur(20px)',
+        animation: 'slideUpPrompt 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       <div
         style={{
-          width: '38px',
-          height: '38px',
-          borderRadius: '10px',
+          width: '42px',
+          height: '42px',
+          borderRadius: '12px',
           background: 'linear-gradient(135deg, var(--burgundy-vibrant), var(--burgundy-primary))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
           flexShrink: 0,
+          boxShadow: '0 4px 12px rgba(159, 18, 57, 0.35)',
         }}
       >
-        <Smartphone size={20} />
+        <MonitorDown size={22} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
-          Download Talk Cross
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+          Install Talk Cross
         </div>
-        <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-          Install as standalone app on your device
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.3 }}>
+          Get the desktop & mobile standalone app
         </div>
       </div>
 
       <button
         onClick={handleInstallClick}
         className="btn-primary"
-        style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', gap: '5px', flexShrink: 0 }}
+        style={{
+          padding: '7px 14px',
+          fontSize: '12.5px',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          flexShrink: 0,
+          borderRadius: '8px',
+          cursor: 'pointer',
+        }}
       >
         <Download size={14} /> Install
       </button>
 
       <button
         onClick={handleDismiss}
-        style={{ color: 'var(--text-muted)', padding: '4px', cursor: 'pointer' }}
+        style={{
+          color: 'var(--text-muted)',
+          padding: '4px',
+          cursor: 'pointer',
+          background: 'transparent',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '50%',
+        }}
         title="Dismiss"
       >
         <X size={16} />
@@ -149,8 +175,8 @@ export const InstallPrompt: React.FC = () => {
       )}
 
       <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
+        @keyframes slideUpPrompt {
+          from { transform: translateY(30px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
