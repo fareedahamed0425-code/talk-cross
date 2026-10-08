@@ -151,6 +151,17 @@ class ApiService {
     });
   }
 
+  public async createGroupConversation(payload: {
+    title: string;
+    memberIds: string[];
+    groupImage?: string | null;
+  }): Promise<{ conversationId: string; created: boolean }> {
+    return this.request('/conversations/group', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   // --- MESSAGES ---
   public async getMessages(conversationId: string, before?: string): Promise<{ messages: Message[]; hasMore: boolean }> {
     const url = before

@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext.js';
 import { useSocket } from './SocketContext.js';
 import { api } from '../services/api.js';
 import { sounds } from '../services/audio.js';
+import { chatPrivacy } from '../utils/chatPrivacy.js';
 import { encryptMessage, decryptMessage } from '../utils/crypto.js';
 import { Conversation, Message, MessageType } from '../types/index.js';
 
@@ -180,14 +181,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // If sent by other user, play sound & mark read
         if (msg.sender_id !== user?.id) {
-          sounds.playReceived();
+          const isMuted = chatPrivacy.isChatMuted(msg.conversation_id);
+          if (!isMuted) {
+            sounds.playReceived();
+          }
           socket.emit('messages_read', { conversationId: msg.conversation_id });
         }
       } else {
         // Message in another conversation
         if (msg.sender_id !== user?.id) {
-          sounds.playNotification();
-          showToast(`💬 New message from ${msg.sender?.display_name || 'Friend'}`, 'info');
+          const isMuted = chatPrivacy.isChatMuted(msg.conversation_id);
+          if (!isMuted) {
+            sounds.playNotification();
+            showToast(`💬 New message from ${msg.sender?.display_name || 'Friend'}`, 'info');
+          }
         }
       }
 

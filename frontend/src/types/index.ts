@@ -92,8 +92,24 @@ export interface Message {
   failed?: boolean;
 }
 
+export interface ConversationMember {
+  id: string;
+  username: string;
+  display_name: string;
+  profile_image: string | null;
+  online_status: boolean;
+  last_seen?: string;
+  role?: string;
+}
+
 export interface Conversation {
   id: string;
+  is_group?: boolean;
+  title?: string | null;
+  group_image?: string | null;
+  created_by?: string | null;
+  members_count?: number;
+  members?: ConversationMember[];
   created_at: string;
   updated_at: string;
   other_user: {
@@ -110,6 +126,7 @@ export interface Conversation {
     content: string | null;
     message_type: MessageType;
     sender_id: string | null;
+    sender_name?: string;
     created_at: string;
     is_deleted: boolean;
   } | null;

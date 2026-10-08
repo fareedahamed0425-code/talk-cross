@@ -50,17 +50,30 @@ CREATE TABLE IF NOT EXISTS friendships (
 -- 5. CONVERSATIONS TABLE
 CREATE TABLE IF NOT EXISTS conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    is_group BOOLEAN DEFAULT FALSE,
+    title VARCHAR(100),
+    group_image TEXT,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Ensure columns exist in existing databases
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_group BOOLEAN DEFAULT FALSE;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS title VARCHAR(100);
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS group_image TEXT;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
 
 -- 6. CONVERSATION MEMBERS TABLE
 CREATE TABLE IF NOT EXISTS conversation_members (
     conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(20) DEFAULT 'member',
     joined_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (conversation_id, user_id)
 );
+
+ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'member';
 
 -- 7. MESSAGES TABLE
 CREATE TABLE IF NOT EXISTS messages (

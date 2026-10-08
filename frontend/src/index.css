@@ -1404,3 +1404,60 @@ input:focus, textarea:focus {
     max-height: 280px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   PRIVACY BLUR & CHAT CONTEXT MENU
+   -------------------------------------------------------------------------- */
+.blurred-privacy-text {
+  filter: blur(6px) !important;
+  user-select: none !important;
+  transition: filter 0.2s ease;
+}
+
+.blurred-privacy-text:hover {
+  filter: blur(0px) !important;
+}
+
+.blurred-privacy-avatar {
+  filter: blur(8px) !important;
+  user-select: none !important;
+  transition: filter 0.2s ease;
+}
+
+.blurred-privacy-avatar:hover {
+  filter: blur(0px) !important;
+}
+
+.chat-context-menu {
+  min-width: 170px;
+  background-color: var(--bg-panel-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.context-menu-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.group-sender-header {
+  line-height: 1.2;
+}

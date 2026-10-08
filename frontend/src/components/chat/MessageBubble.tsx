@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { Message } from '../../types/index.js';
-import { formatMessageTime } from '../../utils/format.js';
+import { formatMessageTime, getAvatarFallbackColor } from '../../utils/format.js';
 import { Check, CheckCheck, Reply, Edit3, Trash2, Copy, MoreHorizontal } from 'lucide-react';
 
 interface MessageBubbleProps {
@@ -12,13 +12,14 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenImage }) => {
   const { user } = useAuth();
-  const { startReply, startEdit, deleteMessage } = useChat();
+  const { activeConversation, startReply, startEdit, deleteMessage } = useChat();
   const [showMenu, setShowMenu] = useState<boolean>(false);
 
   const isSent = message.sender_id === user?.id;
   const isDeleted = message.is_deleted;
   const isSticker = message.message_type === 'sticker';
   const isImage = message.message_type === 'image';
+  const isGroup = !!activeConversation?.is_group;
 
   const handleCopy = () => {
     if (message.content) {
@@ -50,6 +51,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
       onMouseLeave={() => setShowMenu(false)}
     >
       <div className={`message-bubble ${isSticker ? 'sticker-bubble' : ''}`}>
+        {/* Group Message Sender Header */}
+        {isGroup && !isSent && !isDeleted && message.sender_name && (
+          <div
+            className="group-sender-header"
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: getAvatarFallbackColor(message.sender_name),
+              marginBottom: '2px',
+            }}
+          >
+            {message.sender_name}
+          </div>
+        )}
+
         {/* Reply Context Banner */}
         {message.reply_to_message && !isDeleted && (
           <div className="quoted-message">
