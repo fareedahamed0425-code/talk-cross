@@ -3,11 +3,11 @@ import { useAuth } from '../../context/AuthContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { api } from '../../services/api.js';
 import { getAvatarFallbackColor, getInitials } from '../../utils/format.js';
-import { AtSign, Camera, LogOut, Check, X } from 'lucide-react';
+import { AtSign, Camera, LogOut, Check, X, Bell, BellRing, Image as ImageIcon, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
 
 export const ProfilePanel: React.FC = () => {
   const { user, stats, updateUserProfile, signOut, refreshProfile } = useAuth();
-  const { showToast } = useSocket();
+  const { showToast, notificationPermission, requestNotificationPermission, sendTestNotification } = useSocket();
 
   const [displayName, setDisplayName] = useState<string>('');
   const [username, setUsername] = useState<string>('');
@@ -319,6 +319,150 @@ export const ProfilePanel: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Push Notifications Section */}
+        <div
+          style={{
+            marginTop: '28px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '18px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, var(--burgundy-vibrant), var(--burgundy-primary))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                }}
+              >
+                <BellRing size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Push Notifications
+                </div>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                  Instant alerts for messages & photos
+                </div>
+              </div>
+            </div>
+
+            {/* Permission Badge */}
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor:
+                  notificationPermission === 'granted'
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : notificationPermission === 'denied'
+                    ? 'rgba(239, 68, 68, 0.15)'
+                    : 'rgba(245, 158, 11, 0.15)',
+                color:
+                  notificationPermission === 'granted'
+                    ? '#10b981'
+                    : notificationPermission === 'denied'
+                    ? '#ef4444'
+                    : '#f59e0b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {notificationPermission === 'granted' ? (
+                <>
+                  <CheckCircle size={12} /> Enabled
+                </>
+              ) : notificationPermission === 'denied' ? (
+                <>
+                  <AlertCircle size={12} /> Blocked
+                </>
+              ) : (
+                'Not Enabled'
+              )}
+            </span>
+          </div>
+
+          {notificationPermission !== 'granted' && (
+            <button
+              type="button"
+              onClick={() => requestNotificationPermission()}
+              className="btn-primary"
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '12.5px',
+                justifyContent: 'center',
+                gap: '6px',
+                marginBottom: '14px',
+              }}
+            >
+              <Bell size={14} /> Enable Push Notifications
+            </button>
+          )}
+
+          {/* Test Buttons */}
+          <div style={{ marginTop: '12px' }}>
+            <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Test Notification Previews:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => sendTestNotification('image')}
+                style={{
+                  padding: '9px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--bg-hover)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <ImageIcon size={14} color="#f43f5e" /> Test Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => sendTestNotification('message')}
+                style={{
+                  padding: '9px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'var(--bg-hover)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <MessageSquare size={14} color="#38bdf8" /> Test Message
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

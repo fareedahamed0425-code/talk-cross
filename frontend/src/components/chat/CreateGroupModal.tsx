@@ -6,6 +6,7 @@ import { Friend } from '../../types/index.js';
 import { getAvatarFallbackColor, getInitials } from '../../utils/format.js';
 import { Users, X, Search, Check, Camera } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useModalBackHandler } from '../../utils/useModalBackHandler.js';
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   onClose,
   onGroupCreated,
 }) => {
+  useModalBackHandler(isOpen, onClose, 'create-group');
+
   const { refreshConversations } = useChat();
   const { showToast } = useSocket();
 

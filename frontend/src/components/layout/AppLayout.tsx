@@ -4,8 +4,9 @@ import { useChat } from '../../context/ChatContext.js';
 import { Sidebar, SidebarTab } from '../sidebar/Sidebar.js';
 import { ChatArea } from '../chat/ChatArea.js';
 import { UsernameModal } from '../auth/UsernameModal.js';
-import { Toast } from '../common/Toast.js';
+import { NotificationBanner } from '../common/NotificationBanner.js';
 import { InstallPrompt } from '../common/InstallPrompt.js';
+import { notificationService } from '../../services/notificationService.js';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,14 @@ export const AppLayout: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const { activeConversationId, selectConversation } = useChat();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+
+  // Set up deep-link navigation handler for push notification clicks
+  useEffect(() => {
+    notificationService.setNavigateHandler((convId) => {
+      selectConversation(convId);
+      navigate(`/chat/${convId}`);
+    });
+  }, [selectConversation, navigate]);
 
   // Derive active tab from current URL pathname
   const getTabFromPath = (pathname: string): SidebarTab => {
@@ -26,12 +35,14 @@ export const AppLayout: React.FC = () => {
 
   const activeTab = getTabFromPath(location.pathname);
 
-  // Synchronize conversation from route param
+  // Synchronize conversation from route param & support hardware/gesture back button
   useEffect(() => {
     if (conversationId && conversationId !== activeConversationId) {
       selectConversation(conversationId);
+    } else if (!conversationId && activeConversationId && location.pathname === '/chat') {
+      selectConversation(null);
     }
-  }, [conversationId, activeConversationId, selectConversation]);
+  }, [conversationId, activeConversationId, selectConversation, location.pathname]);
 
   const handleTabChange = (tab: SidebarTab) => {
     if (tab === 'chats') {
@@ -81,9 +92,9 @@ export const AppLayout: React.FC = () => {
         />
       </div>
 
-      {/* Modal Dialogs, Toasts & Install App Prompt */}
+      {/* Modal Dialogs, Rich Notifications & Install App Prompt */}
       <UsernameModal />
-      <Toast />
+      <NotificationBanner />
       <InstallPrompt />
     </div>
   );

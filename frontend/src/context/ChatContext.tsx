@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext.js';
 import { useSocket } from './SocketContext.js';
 import { api } from '../services/api.js';
 import { sounds } from '../services/audio.js';
+import { notificationService } from '../services/notificationService.js';
 import { chatPrivacy } from '../utils/chatPrivacy.js';
 import { encryptMessage, decryptMessage } from '../utils/crypto.js';
 import { Conversation, Message, MessageType } from '../types/index.js';
@@ -41,7 +42,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { socket, showToast } = useSocket();
+  const { socket, showToast, showInAppNotification } = useSocket();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -56,6 +57,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const typingTimeoutRef = useRef<any>(null);
   const activeConvIdRef = useRef<string | null>(null);
   activeConvIdRef.current = activeConversationId;
+
+  const selectConversation = useCallback((id: string | null) => {
+    setActiveConversationId(id);
+    setReplyingTo(null);
+    setEditingMessage(null);
+  }, []);
 
   // Helper: Decrypt array of messages in a conversation
   const decryptMessagesList = async (rawMessages: Message[], convId: string): Promise<Message[]> => {
@@ -182,8 +189,28 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // If sent by other user, play sound & mark read
         if (msg.sender_id !== user?.id) {
           const isMuted = chatPrivacy.isChatMuted(msg.conversation_id);
+          const isAppFocused = typeof document !== 'undefined' && !document.hidden && document.hasFocus();
+
           if (!isMuted) {
-            sounds.playReceived();
+            if (isAppFocused) {
+              sounds.playReceived();
+            } else {
+              sounds.playNotification();
+              // Native push notification if app tab is minimized/in background
+              notificationService.notifyIncomingMessage({
+                senderName: msg.sender?.display_name || 'Friend',
+                senderUsername: msg.sender?.username,
+                senderAvatar: msg.sender?.profile_image,
+                messageType: msg.message_type,
+                content: decryptedContent,
+                mediaUrl: msg.media_url,
+                stickerName: msg.sticker_name,
+                conversationId: msg.conversation_id,
+                onOpen: () => {
+                  selectConversation(msg.conversation_id);
+                },
+              });
+            }
           }
           socket.emit('messages_read', { conversationId: msg.conversation_id });
         }
@@ -193,7 +220,37 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const isMuted = chatPrivacy.isChatMuted(msg.conversation_id);
           if (!isMuted) {
             sounds.playNotification();
-            showToast(`💬 New message from ${msg.sender?.display_name || 'Friend'}`, 'info');
+
+            // 1. Native Push Notification (Rich format with image preview / text)
+            notificationService.notifyIncomingMessage({
+              senderName: msg.sender?.display_name || 'Friend',
+              senderUsername: msg.sender?.username,
+              senderAvatar: msg.sender?.profile_image,
+              messageType: msg.message_type,
+              content: decryptedContent,
+              mediaUrl: msg.media_url,
+              stickerName: msg.sticker_name,
+              conversationId: msg.conversation_id,
+              onOpen: () => {
+                selectConversation(msg.conversation_id);
+              },
+            });
+
+            // 2. Beautiful In-App Heads-Up Banner Notification
+            showInAppNotification({
+              type: msg.message_type === 'image' ? 'image' : msg.message_type === 'sticker' ? 'sticker' : 'message',
+              senderName: msg.sender?.display_name || 'Friend',
+              senderUsername: msg.sender?.username,
+              senderAvatar: msg.sender?.profile_image,
+              content: decryptedContent,
+              mediaUrl: msg.media_url,
+              stickerUrl: msg.sticker_url,
+              stickerName: msg.sticker_name,
+              conversationId: msg.conversation_id,
+              onClick: () => {
+                selectConversation(msg.conversation_id);
+              },
+            });
           }
         }
       }
@@ -290,7 +347,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socket.off('user_stop_typing', handleUserStopTyping);
       socket.off('conversation_updated', handleConversationUpdated);
     };
-  }, [socket, user?.id, showToast, refreshConversations]);
+  }, [socket, user?.id, showToast, showInAppNotification, selectConversation, refreshConversations]);
 
   const loadMoreMessages = async () => {
     if (!activeConversationId || isLoadingMessages || !hasMoreMessages || messages.length === 0) return;
@@ -397,7 +454,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         replyingTo,
         editingMessage,
         typingUsers,
-        selectConversation: setActiveConversationId,
+        selectConversation,
         loadMoreMessages,
         sendMessage,
         editMessage,

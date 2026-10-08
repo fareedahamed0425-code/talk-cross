@@ -1,8 +1,24 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext.js';
 import { sounds } from '../services/audio.js';
+import { notificationService } from '../services/notificationService.js';
 import confetti from 'canvas-confetti';
+
+export interface InAppNotificationData {
+  id: string;
+  type: 'message' | 'image' | 'sticker' | 'friend_request' | 'friend_accepted' | 'info';
+  senderName: string;
+  senderUsername?: string;
+  senderAvatar?: string | null;
+  content?: string | null;
+  mediaUrl?: string | null;
+  stickerUrl?: string | null;
+  stickerName?: string | null;
+  conversationId?: string;
+  timestamp?: string;
+  onClick?: () => void;
+}
 
 interface SocketContextType {
   socket: Socket | null;
@@ -12,6 +28,12 @@ interface SocketContextType {
   toast: { message: string; type?: 'info' | 'success' | 'warning' } | null;
   showToast: (message: string, type?: 'info' | 'success' | 'warning') => void;
   clearToast: () => void;
+  inAppNotifications: InAppNotificationData[];
+  showInAppNotification: (notif: Omit<InAppNotificationData, 'id'>) => string;
+  dismissInAppNotification: (id: string) => void;
+  notificationPermission: NotificationPermission;
+  requestNotificationPermission: () => Promise<NotificationPermission>;
+  sendTestNotification: (type?: 'message' | 'image') => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -22,7 +44,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type?: 'info' | 'success' | 'warning' } | null>(null);
+  const [inAppNotifications, setInAppNotifications] = useState<InAppNotificationData[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    notificationService.getPermission()
+  );
+
   const toastTimerRef = useRef<any>(null);
+  const notifTimersRef = useRef<Map<string, any>>(new Map());
 
   const showToast = (message: string, type: 'info' | 'success' | 'warning' = 'info') => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -35,6 +63,92 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const clearToast = () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(null);
+  };
+
+  const dismissInAppNotification = useCallback((id: string) => {
+    const timer = notifTimersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      notifTimersRef.current.delete(id);
+    }
+    setInAppNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const showInAppNotification = useCallback(
+    (notif: Omit<InAppNotificationData, 'id'>): string => {
+      const id = 'notif_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const newNotif: InAppNotificationData = {
+        ...notif,
+        id,
+        timestamp: notif.timestamp || new Date().toISOString(),
+      };
+
+      setInAppNotifications((prev) => {
+        // Keep max 3 notifications visible at once to avoid crowding
+        const filtered = prev.slice(-2);
+        return [...filtered, newNotif];
+      });
+
+      // Auto dismiss after 6 seconds for images, 5 seconds for messages
+      const timeoutMs = notif.type === 'image' ? 6500 : 5000;
+      const timer = setTimeout(() => {
+        dismissInAppNotification(id);
+      }, timeoutMs);
+
+      notifTimersRef.current.set(id, timer);
+      return id;
+    },
+    [dismissInAppNotification]
+  );
+
+  const requestNotificationPermission = async (): Promise<NotificationPermission> => {
+    const perm = await notificationService.requestPermission();
+    setNotificationPermission(perm);
+    if (perm === 'granted') {
+      showToast('🔔 Push notifications enabled! You will be notified of new messages & photos.', 'success');
+    } else if (perm === 'denied') {
+      showToast('Notifications are blocked in your browser settings.', 'warning');
+    }
+    return perm;
+  };
+
+  const sendTestNotification = (type: 'message' | 'image' = 'image') => {
+    if (type === 'image') {
+      const testImage =
+        'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=600&q=80';
+      // Native OS push notification
+      notificationService.showNotification({
+        title: '📷 Sophia Turner sent a photo',
+        body: 'Check out this cute puppy! 🐶',
+        image: testImage,
+        icon: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+        tag: 'test-image',
+      });
+      // In-app rich banner
+      showInAppNotification({
+        type: 'image',
+        senderName: 'Sophia Turner',
+        senderUsername: 'sophia',
+        senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+        content: 'Check out this cute puppy! 🐶',
+        mediaUrl: testImage,
+      });
+    } else {
+      notificationService.showNotification({
+        title: '💬 Liam Miller (@liam)',
+        body: 'Hey there! Are we still meeting for coffee this afternoon?',
+        icon: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+        tag: 'test-msg',
+      });
+      showInAppNotification({
+        type: 'message',
+        senderName: 'Liam Miller',
+        senderUsername: 'liam',
+        senderAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+        content: 'Hey there! Are we still meeting for coffee this afternoon? ☕',
+      });
+    }
+    sounds.playReceived();
   };
 
   useEffect(() => {
@@ -60,7 +174,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     s.on('connect', () => {
-      console.log('⚡ Connected to Chaton real-time socket');
+      console.log('⚡ Connected to Talk Cross real-time socket');
       setIsConnected(true);
     });
 
@@ -83,14 +197,47 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     s.on('new_friend_request', (data: { sender?: any }) => {
       sounds.playNotification();
-      showToast(`👋 New friend request from ${data.sender?.display_name || 'a user'} (@${data.sender?.username || ''})`, 'info');
+      const sender = data.sender;
+      const senderName = sender?.display_name || 'A user';
+      const senderUsername = sender?.username || '';
+      const senderAvatar = sender?.profile_image;
+
+      // Native Push Notification
+      notificationService.notifyFriendRequest({
+        senderName,
+        senderUsername,
+        senderAvatar,
+      });
+
+      // Rich in-app banner
+      showInAppNotification({
+        type: 'friend_request',
+        senderName,
+        senderUsername,
+        senderAvatar,
+        content: 'wants to connect with you on Talk Cross',
+      });
     });
 
     s.on('friend_request_accepted', (data: { friend?: any }) => {
       sounds.playNotification();
       confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
-      if (data.friend) {
-        showToast(`🎉 You and ${data.friend.display_name} are now connected!`, 'success');
+      const friend = data.friend;
+      if (friend) {
+        // Native Push Notification
+        notificationService.notifyFriendAccepted({
+          friendName: friend.display_name,
+          friendAvatar: friend.profile_image,
+        });
+
+        // Rich in-app banner
+        showInAppNotification({
+          type: 'friend_accepted',
+          senderName: friend.display_name,
+          senderUsername: friend.username,
+          senderAvatar: friend.profile_image,
+          content: 'accepted your friend request! You can now chat.',
+        });
       }
     });
 
@@ -99,7 +246,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       s.disconnect();
     };
-  }, [token, user?.id]);
+  }, [token, user?.id, showInAppNotification]);
 
   const isOnline = (userId: string): boolean => {
     return onlineUserIds.has(userId);
@@ -115,6 +262,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         toast,
         showToast,
         clearToast,
+        inAppNotifications,
+        showInAppNotification,
+        dismissInAppNotification,
+        notificationPermission,
+        requestNotificationPermission,
+        sendTestNotification,
       }}
     >
       {children}
