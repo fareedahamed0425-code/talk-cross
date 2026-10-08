@@ -3,6 +3,7 @@ import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { api } from '../../services/api.js';
 import { Sticker } from '../../types/index.js';
+import { generateTalkCrossMediaName } from '../../utils/format.js';
 import {
   Send,
   Smile,
@@ -210,8 +211,11 @@ export const ChatComposer: React.FC = () => {
       return;
     }
 
-    setPendingImageFile(file);
-    const objectUrl = URL.createObjectURL(file);
+    const customName = generateTalkCrossMediaName(file.name, file.type);
+    const renamedFile = new File([file], customName, { type: file.type });
+
+    setPendingImageFile(renamedFile);
+    const objectUrl = URL.createObjectURL(renamedFile);
     setPendingImagePreview(objectUrl);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

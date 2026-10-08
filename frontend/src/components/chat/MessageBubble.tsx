@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { Message } from '../../types/index.js';
-import { formatMessageTime, getAvatarFallbackColor } from '../../utils/format.js';
+import { formatMessageTime, getAvatarFallbackColor, resolveMediaUrl } from '../../utils/format.js';
 import { Reply, Edit3, Trash2, Copy, MoreHorizontal } from 'lucide-react';
 import { MessageStatusTicks } from './MessageStatusTicks.js';
 
@@ -184,19 +184,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         ) : isSticker ? (
           <div>
             <img
-              src={message.sticker_url || message.media_url || ''}
+              src={resolveMediaUrl(message.sticker_url || message.media_url)}
               alt={message.sticker_name || 'Sticker'}
               className="sticker-img"
-              onClick={() => message.sticker_url && onOpenImage(message.sticker_url)}
+              onClick={() => {
+                const url = resolveMediaUrl(message.sticker_url || message.media_url);
+                if (url) onOpenImage(url);
+              }}
             />
           </div>
         ) : isImage ? (
           <div>
             <img
-              src={message.media_url || ''}
+              src={resolveMediaUrl(message.media_url)}
               alt="Attachment"
               className="message-image"
-              onClick={() => message.media_url && onOpenImage(message.media_url)}
+              onClick={() => {
+                const url = resolveMediaUrl(message.media_url);
+                if (url) onOpenImage(url);
+              }}
             />
             {message.content && <div className="message-caption">{message.content}</div>}
           </div>

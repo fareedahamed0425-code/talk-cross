@@ -15,19 +15,42 @@ export async function uploadMedia(req: Request, res: Response): Promise<void> {
     }
 
     const bucket = req.body.bucket === 'avatars' ? 'avatars' : 'chat-media';
-    const ext = req.file.mimetype.split('/')[1] || 'jpeg';
-    const filename = `${currentUserId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    
+    // Resolve clean extension
+    let ext = 'jpg';
+    if (req.file.originalname && req.file.originalname.includes('.')) {
+      ext = req.file.originalname.split('.').pop() || 'jpg';
+    } else if (req.file.mimetype) {
+      const mimeExt = req.file.mimetype.split('/')[1];
+      ext = mimeExt === 'jpeg' ? 'jpg' : (mimeExt?.replace('+xml', '') || 'jpg');
+    }
+    ext = ext.toLowerCase();
 
-    const publicUrl = await uploadFile(bucket, filename, req.file.buffer, req.file.mimetype);
+    // Format: talk-cross(YYYY-MM-DD_image_HHMMSS_XXX).ext
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    const secs = String(now.getSeconds()).padStart(2, '0');
+    const randNo = Math.floor(100 + Math.random() * 900);
+
+    const dateStr = `${year}-${month}-${day}`;
+    const imageSeq = `${hours}${mins}${secs}_${randNo}`;
+    const customFileName = `talk-cross(${dateStr}_image_${imageSeq}).${ext}`;
+    const storagePath = `${currentUserId}/${customFileName}`;
+
+    const publicUrl = await uploadFile(bucket, storagePath, req.file.buffer, req.file.mimetype);
 
     res.json({
       url: publicUrl,
-      filename,
+      filename: customFileName,
       mimetype: req.file.mimetype,
       size: req.file.size,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading media:', error);
-    res.status(500).json({ error: 'Failed to upload media file' });
+    res.status(500).json({ error: error?.message || 'Failed to upload media file' });
   }
 }

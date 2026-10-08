@@ -106,3 +106,36 @@ export function getInitials(name: string): string {
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+export function generateTalkCrossMediaName(originalName?: string, mimeType?: string): string {
+  const ext = originalName?.split('.').pop() || (mimeType ? mimeType.split('/')[1]?.replace('+xml', '') : 'jpg') || 'jpg';
+  const cleanExt = (ext === 'jpeg' ? 'jpg' : ext).toLowerCase();
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+  const randNo = Math.floor(100 + Math.random() * 900);
+  const imageSeq = `${hours}${mins}${secs}_${randNo}`;
+
+  return `talk-cross(${dateStr}_image_${imageSeq}).${cleanExt}`;
+}
+
+export function resolveMediaUrl(url?: string | null): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  if (apiUrl.startsWith('http://') || apiUrl.startsWith('https://')) {
+    const origin = apiUrl.replace(/\/api\/?$/, '');
+    return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+  return url;
+}
+
