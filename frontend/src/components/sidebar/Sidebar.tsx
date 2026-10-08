@@ -15,6 +15,7 @@ import {
   UserPlus,
   Search,
   Smile,
+  User,
   Sun,
   Moon,
   PanelLeftClose,
@@ -53,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'requests':
         return 'Friend Requests';
       case 'search':
-        return 'Search Users';
+        return 'Find People';
       case 'stickers':
         return 'Sticker Studio';
       case 'profile':
@@ -63,9 +64,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* 1. Left Vertical Navigation Rail (Individual Modular Floating Strip) */}
+      {/* 1. Navigation Rail / Mobile Bottom Navigation */}
       <nav className="nav-rail">
-        {/* Brand Icon / Logo */}
+        {/* Desktop Brand Logo */}
         <div
           className="nav-rail-logo"
           title="Talk Cross"
@@ -86,8 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (isCollapsed) onToggleCollapse();
             }}
             title="Conversations"
+            aria-label="Conversations"
           >
             <MessageSquare size={21} />
+            <span className="nav-item-label">Chats</span>
             {totalUnread > 0 && <span className="nav-badge">{totalUnread}</span>}
           </button>
 
@@ -98,8 +101,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (isCollapsed) onToggleCollapse();
             }}
             title="Contacts"
+            aria-label="Contacts"
           >
             <Users size={21} />
+            <span className="nav-item-label">Contacts</span>
           </button>
 
           <button
@@ -109,8 +114,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (isCollapsed) onToggleCollapse();
             }}
             title="Friend Requests"
+            aria-label="Friend Requests"
           >
             <UserPlus size={21} />
+            <span className="nav-item-label">Requests</span>
           </button>
 
           <button
@@ -120,8 +127,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (isCollapsed) onToggleCollapse();
             }}
             title="Find People"
+            aria-label="Search"
           >
             <Search size={21} />
+            <span className="nav-item-label">Search</span>
           </button>
 
           <button
@@ -131,13 +140,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (isCollapsed) onToggleCollapse();
             }}
             title="Sticker Studio"
+            aria-label="Stickers"
           >
             <Smile size={21} />
+            <span className="nav-item-label">Stickers</span>
+          </button>
+
+          <button
+            className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('profile');
+              if (isCollapsed) onToggleCollapse();
+            }}
+            title="My Profile"
+            aria-label="Profile"
+          >
+            <User size={21} />
+            <span className="nav-item-label">Profile</span>
           </button>
         </div>
 
-        {/* Bottom Actions: Theme Switcher, Collapse Toggle & Profile */}
-        <div className="nav-rail-bottom">
+        {/* Desktop Bottom Actions */}
+        <div className="nav-rail-bottom desktop-only-flex">
           {/* Collapse Sidebar Toggle */}
           <button
             className="nav-item"
@@ -157,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {theme === 'dark' ? <Sun size={20} color="#f59e0b" /> : <Moon size={20} color="var(--burgundy-primary)" />}
           </button>
 
-          {/* User Profile Avatar Trigger */}
+          {/* User Profile Avatar */}
           <button
             className={`user-avatar-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => {
@@ -194,19 +218,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </nav>
 
-      {/* 2. Dynamic Sidebar Panel (Collapsible Individual Card) */}
+      {/* 2. Dynamic Sidebar Panel */}
       <div className={`sidebar-panel-wrap ${isCollapsed ? 'collapsed' : ''}`}>
         <aside className="sidebar-panel">
           <div className="sidebar-header">
             <h2 className="sidebar-title">{getTitle()}</h2>
-            <button
-              onClick={onToggleCollapse}
-              className="icon-btn"
-              title="Collapse"
-              style={{ width: '32px', height: '32px' }}
-            >
-              <PanelLeftClose size={18} />
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Mobile quick theme toggle */}
+              <button
+                className="icon-btn mobile-only-flex"
+                onClick={toggleTheme}
+                title="Toggle Theme"
+                style={{ width: '34px', height: '34px' }}
+              >
+                {theme === 'dark' ? <Sun size={17} color="#f59e0b" /> : <Moon size={17} color="var(--burgundy-primary)" />}
+              </button>
+
+              {/* Desktop collapse button */}
+              <button
+                onClick={onToggleCollapse}
+                className="icon-btn desktop-only"
+                title="Collapse"
+                style={{ width: '32px', height: '32px' }}
+              >
+                <PanelLeftClose size={18} />
+              </button>
+            </div>
           </div>
 
           {activeTab === 'chats' && <ConversationList onOpenSearch={() => setActiveTab('search')} />}

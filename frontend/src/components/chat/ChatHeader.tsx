@@ -2,7 +2,7 @@ import React from 'react';
 import { useSocket } from '../../context/SocketContext.js';
 import { Conversation } from '../../types/index.js';
 import { formatLastSeen, getAvatarFallbackColor, getInitials } from '../../utils/format.js';
-import { ArrowLeft, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, PanelLeftOpen, ShieldCheck } from 'lucide-react';
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -26,24 +26,23 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   return (
     <header className="chat-header">
       <div className="chat-header-user">
-        {/* Mobile Back Button */}
+        {/* Mobile / Compact Back Button */}
         {onBack && (
           <button
             onClick={onBack}
-            className="icon-btn"
-            style={{ marginRight: '-4px' }}
-            title="Back to Chats"
+            className="icon-btn chat-back-btn"
+            title="Back to Conversations"
+            aria-label="Back"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={22} />
           </button>
         )}
 
-        {/* Sidebar Expand Toggle Button when collapsed on Desktop */}
+        {/* Desktop Sidebar Expand Button when collapsed */}
         {isSidebarCollapsed && onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="icon-btn"
-            style={{ marginRight: '-2px' }}
+            className="icon-btn desktop-only"
             title="Expand Sidebar"
           >
             <PanelLeftOpen size={19} />
@@ -53,10 +52,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* User Avatar */}
         <div className="conv-avatar-wrap">
           {user.profile_image ? (
-            <img src={user.profile_image} alt={user.display_name} className="avatar-img" />
+            <img src={user.profile_image} alt={user.display_name} className="avatar-img chat-header-avatar" />
           ) : (
             <div
-              className="avatar-img"
+              className="avatar-img chat-header-avatar"
               style={{ backgroundColor: getAvatarFallbackColor(user.display_name) }}
             >
               {getInitials(user.display_name)}
@@ -66,52 +65,34 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
 
         {/* Name and Status */}
-        <div>
-          <div className="chat-header-name">{user.display_name}</div>
+        <div className="chat-header-meta">
+          <div className="chat-header-name-row">
+            <span className="chat-header-name">{user.display_name}</span>
+            <span className="chat-header-mobile-username">@{user.username}</span>
+          </div>
           <div className={`chat-header-status ${online ? 'online' : ''}`}>
             {typingText ? (
-              <span style={{ color: 'var(--burgundy-300)', fontStyle: 'italic' }}>
-                {typingText}
-              </span>
+              <span className="typing-status-text">{typingText}</span>
             ) : online ? (
               <span>● Online</span>
             ) : (
               <span>{formatLastSeen(user.last_seen, false)}</span>
             )}
+            <span className="chat-header-e2ee-tag" title="End-to-End Encrypted">
+              • 🔒
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Action Icons & End-to-End Encrypted Badge */}
-      <div className="chat-header-actions">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-full)',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
-          }}
-          title="Messages are protected with End-to-End Encryption (AES-256-GCM)."
-        >
-          <span>🔒 End-to-end encrypted</span>
+      {/* Desktop Header Badges (Hidden on mobile to eliminate clutter) */}
+      <div className="chat-header-actions desktop-only-flex">
+        <div className="chat-header-e2ee-badge" title="Messages are protected with End-to-End Encryption (AES-256-GCM).">
+          <ShieldCheck size={14} color="#10b981" />
+          <span>End-to-end encrypted</span>
         </div>
 
-        <div
-          style={{
-            fontSize: '12px',
-            color: 'var(--text-muted)',
-            backgroundColor: 'var(--bg-panel-secondary)',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-full)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
+        <div className="chat-header-username-badge">
           @{user.username}
         </div>
       </div>
