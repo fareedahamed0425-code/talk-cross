@@ -73,12 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         // Check if demo token exists in localStorage
-        const demoToken = localStorage.getItem('chaton_demo_token');
+        const demoToken = localStorage.getItem('talk_cross_demo_token');
         if (demoToken) {
           try {
             await syncWithBackend(demoToken);
           } catch {
-            localStorage.removeItem('chaton_demo_token');
+            localStorage.removeItem('talk_cross_demo_token');
             setUser(null);
             setToken(null);
             api.setToken(null);
@@ -122,11 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user_id: mockUid,
         uid: mockUid,
         name: customName,
-        email: `${clean}@chaton.app`,
+        email: `${clean}@talk-cross.app`,
         picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${clean}`,
       };
       const demoToken = `header.${btoa(JSON.stringify(payload))}.signature`;
-      localStorage.setItem('chaton_demo_token', demoToken);
+      localStorage.setItem('talk_cross_demo_token', demoToken);
       await syncWithBackend(demoToken);
     } catch (err: any) {
       console.error('Demo Sign-In Error:', err);
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      localStorage.removeItem('chaton_demo_token');
+      localStorage.removeItem('talk_cross_demo_token');
       await fbSignOut(auth);
       setUser(null);
       setFirebaseUser(null);

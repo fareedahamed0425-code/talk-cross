@@ -64,14 +64,14 @@ export async function verifyFirebaseIdToken(token: string): Promise<admin.auth.D
         if (parsed.user_id || parsed.sub || parsed.uid) {
           return {
             uid: parsed.user_id || parsed.sub || parsed.uid,
-            email: parsed.email || `${parsed.sub || 'user'}@chaton.dev`,
-            name: parsed.name || parsed.display_name || 'Chaton User',
+            email: parsed.email || `${parsed.sub || 'user'}@talk-cross.dev`,
+            name: parsed.name || parsed.display_name || 'Talk Cross User',
             picture: parsed.picture || parsed.photo_url || null,
             auth_time: Math.floor(Date.now() / 1000),
             iat: Math.floor(Date.now() / 1000),
             exp: Math.floor(Date.now() / 1000) + 3600,
-            aud: 'dev-chaton',
-            iss: 'https://securetoken.google.com/dev-chaton',
+            aud: 'dev-talk-cross',
+            iss: 'https://securetoken.google.com/dev-talk-cross',
             sub: parsed.user_id || parsed.sub || parsed.uid,
             firebase: { identities: {}, sign_in_provider: 'google.com' },
           } as admin.auth.DecodedIdToken;

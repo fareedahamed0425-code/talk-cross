@@ -130,7 +130,7 @@ async function startServer() {
 
   server.listen(PORT, () => {
     console.log(`
-🚀 Chaton Real-Time Backend is running!
+🚀 Talk Cross Real-Time Backend is running!
 📡 URL: http://localhost:${PORT}
 🩺 Health Check: http://localhost:${PORT}/health
 ⚡ Environment: ${ENV.NODE_ENV}
