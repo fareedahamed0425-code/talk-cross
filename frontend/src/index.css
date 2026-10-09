@@ -1539,14 +1539,16 @@ input:focus, textarea:focus {
   /* Chat Area Fullscreen Overlay on Mobile */
   .chat-area-wrap {
     width: 100%;
-    height: 100dvh;
-    height: -webkit-fill-available;
+    height: 100%;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .chat-area-wrap.hidden-mobile {
@@ -1554,8 +1556,14 @@ input:focus, textarea:focus {
   }
 
   .chat-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
     border-radius: 0;
     border: none;
+    overflow: hidden;
   }
 
   /* Sleek, Uncluttered Mobile Chat Header */
@@ -1564,6 +1572,7 @@ input:focus, textarea:focus {
     padding: calc(6px + env(safe-area-inset-top, 0px)) 12px 6px 8px;
     border-bottom: 1px solid var(--border-subtle);
     background-color: var(--bg-panel);
+    flex-shrink: 0;
   }
 
   .chat-header-user {
@@ -1600,30 +1609,52 @@ input:focus, textarea:focus {
 
   /* Chat Composer on Mobile */
   .chat-composer {
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) 10px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
     background-color: var(--bg-panel);
     border-top: 1px solid var(--border-subtle);
+    position: relative;
+    z-index: 20;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .composer-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    width: 100%;
   }
 
   .composer-pill-box {
+    flex: 1;
+    min-width: 0;
     padding: 2px 4px;
     border-radius: 20px;
+    display: flex;
+    align-items: flex-end;
   }
 
   .composer-textarea-inner {
+    flex: 1;
+    min-width: 0;
     min-height: 36px;
-    font-size: 14px;
-    padding: 8px 6px;
+    max-height: 100px;
+    font-size: 16px; /* 16px prevents iOS Safari intrusive zoom-on-focus */
+    padding: 7px 6px;
+    line-height: 1.35;
   }
 
   .composer-inner-action-btn {
     width: 32px;
     height: 32px;
+    flex-shrink: 0;
+    padding: 0;
   }
 
   .send-btn {
     width: 38px;
     height: 38px;
+    flex-shrink: 0;
   }
 
   .message-bubble {

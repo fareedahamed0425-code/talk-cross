@@ -7,7 +7,7 @@ const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
   messageType: z.enum(['text', 'image', 'sticker']).default('text'),
   content: z.string().max(4000).optional().nullable(),
-  mediaUrl: z.string().url().optional().nullable(),
+  mediaUrl: z.string().optional().nullable(),
   stickerId: z.string().uuid().optional().nullable(),
   replyToMessageId: z.string().uuid().optional().nullable(),
 });

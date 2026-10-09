@@ -8,7 +8,7 @@ const syncSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
   displayName: z.string().min(1).max(100).optional(),
   email: z.string().email().optional().nullable(),
-  profileImage: z.string().url().optional().nullable(),
+  profileImage: z.string().optional().nullable(),
 });
 
 function sanitizeUsername(input: string): string {

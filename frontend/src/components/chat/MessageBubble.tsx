@@ -33,9 +33,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
     };
   }, [showMenu]);
 
-  // Mobile Swipe-to-Reply touch gesture state
+  // Mobile Swipe-to-Reply & Double-Tap gesture state
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
+  const lastTapRef = useRef<number>(0);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
 
@@ -54,7 +55,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
   );
 
   // Check 15-minute edit window (timer resets on each edit as updated_at is refreshed)
-  // Window logic is internal without exposing any timer/countdown to the user
   const lastActiveTimestamp = message.updated_at || message.created_at;
   const isWithinEditWindow =
     Date.now() - new Date(lastActiveTimestamp).getTime() <= 15 * 60 * 1000;
@@ -71,10 +71,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
     if (!isSwiping || isDeleted) return;
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
-    const diffX = touchStartX.current - currentX; // positive when dragging left
+    const diffX = currentX - touchStartX.current; // positive when swiping right
     const diffY = Math.abs(touchStartY.current - currentY);
 
-    if (diffX > 10 && diffX > diffY * 1.2) {
+    if (diffX > 8 && diffX > diffY * 1.1) {
       setSwipeOffset(Math.min(diffX, 70));
     } else if (diffY > diffX && diffY > 20) {
       setIsSwiping(false);
@@ -83,14 +83,35 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
   };
 
   const handleTouchEnd = () => {
-    if (isSwiping && swipeOffset > 45 && !isDeleted) {
+    if (isSwiping && swipeOffset > 38 && !isDeleted) {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(30);
+      }
+      startReply(message);
+    } else if (!isDeleted && swipeOffset < 10) {
+      // Double-tap detection on mobile
+      const now = Date.now();
+      if (now - lastTapRef.current < 320) {
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate(30);
+        }
+        startReply(message);
+        lastTapRef.current = 0;
+      } else {
+        lastTapRef.current = now;
+      }
+    }
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  };
+
+  const handleDoubleClick = () => {
+    if (!isDeleted) {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate(30);
       }
       startReply(message);
     }
-    setIsSwiping(false);
-    setSwipeOffset(0);
   };
 
   const handleCopy = () => {
@@ -123,12 +144,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
       onMouseLeave={() => setShowMenu(false)}
       style={{ position: 'relative' }}
     >
-      {/* Swipe-to-reply reveal indicator on mobile */}
-      {swipeOffset > 15 && (
+      {/* Swipe-to-reply reveal indicator on right-swipe */}
+      {swipeOffset > 12 && (
         <div
           style={{
             position: 'absolute',
-            right: `${Math.max(8, swipeOffset * 0.4)}px`,
+            left: `${Math.max(6, swipeOffset * 0.45)}px`,
             top: '50%',
             transform: 'translateY(-50%)',
             width: '32px',
@@ -140,7 +161,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
-            opacity: Math.min(swipeOffset / 45, 1),
+            opacity: Math.min(swipeOffset / 38, 1),
             transition: 'opacity 0.15s ease',
             pointerEvents: 'none',
             zIndex: 10,
@@ -155,8 +176,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onDoubleClick={handleDoubleClick}
         style={{
-          transform: swipeOffset > 0 ? `translateX(-${swipeOffset}px)` : 'none',
+          transform: swipeOffset > 0 ? `translateX(${swipeOffset}px)` : 'none',
           transition: isSwiping ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
@@ -178,7 +200,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         {/* Reply Context Banner */}
         {message.reply_to_message && !isDeleted && (
           <div className="quoted-message">
-            <div className="quoted-sender">{message.reply_to_message.sender_name || 'Friend'}</div>
+            <div className="quoted-sender">
+              {message.reply_to_message.sender_name || 'Friend'}
+            </div>
             <div className="quoted-text">
               {message.reply_to_message.message_type === 'image' ? (
                 '📷 Photo'

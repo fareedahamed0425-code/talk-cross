@@ -68,11 +68,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const decryptMessagesList = async (rawMessages: Message[], convId: string): Promise<Message[]> => {
     return Promise.all(
       rawMessages.map(async (msg) => {
+        let content = msg.content;
         if (msg.content && !msg.is_deleted) {
-          const decrypted = await decryptMessage(msg.content, convId);
-          return { ...msg, content: decrypted };
+          content = await decryptMessage(msg.content, convId);
         }
-        return msg;
+        let replyToMsg = msg.reply_to_message;
+        if (replyToMsg && replyToMsg.content) {
+          const decReply = await decryptMessage(replyToMsg.content, convId);
+          replyToMsg = { ...replyToMsg, content: decReply };
+        }
+        return { ...msg, content, reply_to_message: replyToMsg };
       })
     );
   };
@@ -220,7 +225,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (msg.content && !msg.is_deleted) {
         decryptedContent = await decryptMessage(msg.content, msg.conversation_id);
       }
-      const decryptedMsg = { ...msg, content: decryptedContent };
+      let decryptedReply = msg.reply_to_message;
+      if (decryptedReply && decryptedReply.content) {
+        const replyDec = await decryptMessage(decryptedReply.content, msg.conversation_id);
+        decryptedReply = { ...decryptedReply, content: replyDec };
+      }
+      const decryptedMsg = { ...msg, content: decryptedContent, reply_to_message: decryptedReply };
 
       // If message belongs to active conversation
       if (msg.conversation_id === activeConvIdRef.current) {
@@ -502,9 +512,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendMessage,
         editMessage,
         deleteMessage,
-        startReply: (msg) => {
+        startReply: async (msg) => {
           setEditingMessage(null);
-          setReplyingTo(msg);
+          let resolvedMsg = msg;
+          if (msg.content && msg.content.startsWith('e2ee:') && (activeConversationId || msg.conversation_id)) {
+            const dec = await decryptMessage(msg.content, activeConversationId || msg.conversation_id);
+            resolvedMsg = { ...msg, content: dec };
+          }
+          setReplyingTo(resolvedMsg);
         },
         cancelReply: () => setReplyingTo(null),
         startEdit: (msg) => {

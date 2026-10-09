@@ -34,8 +34,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     const touch = e.touches[0];
     touchStartX.current = touch.clientX;
     touchStartY.current = touch.clientY;
-    // Allow swipe back if starting anywhere in the left 35% of the screen or left 100px
-    if (touch.clientX < Math.max(120, window.innerWidth * 0.35)) {
+    // Allow swipe back only when initiating gesture at the left screen edge (within 28px)
+    if (touch.clientX < 28) {
       setIsSwipingBack(true);
     }
   };

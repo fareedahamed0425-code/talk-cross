@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { api } from '../../services/api.js';
@@ -71,6 +72,7 @@ const EMOJI_CATEGORIES = [
 ];
 
 export const ChatComposer: React.FC = () => {
+  const { user } = useAuth();
   const {
     sendMessage,
     replyingTo,
@@ -184,7 +186,11 @@ export const ChatComposer: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (pendingImageFile) {
+        handleSendImageUpload();
+      } else {
+        handleSend();
+      }
     }
   };
 
@@ -270,7 +276,7 @@ export const ChatComposer: React.FC = () => {
         <div className="reply-preview-bar">
           <div className="reply-preview-content">
             <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--burgundy-300)' }}>
-              Replying to {replyingTo.sender_name || 'Friend'}
+              Replying to {replyingTo.sender?.display_name || replyingTo.sender?.username || (replyingTo.sender_id === user?.id ? 'You' : replyingTo.sender_name) || 'Friend'}
             </div>
             <div
               style={{
@@ -522,7 +528,7 @@ export const ChatComposer: React.FC = () => {
         <button
           type="button"
           onClick={pendingImagePreview ? handleSendImageUpload : handleSend}
-          disabled={!text.trim() && !pendingImagePreview}
+          disabled={(!text.trim() && !pendingImagePreview) || isUploadingImage}
           className="send-btn"
           title="Send message"
         >

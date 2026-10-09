@@ -7,7 +7,7 @@ const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
   bio: z.string().max(255).optional(),
-  profileImage: z.string().url().nullable().optional(),
+  profileImage: z.string().nullable().optional(),
 });
 
 export async function getMe(req: Request, res: Response): Promise<void> {
