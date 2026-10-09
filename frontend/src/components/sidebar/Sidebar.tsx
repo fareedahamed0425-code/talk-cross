@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
+import { useSocket } from '../../context/SocketContext.js';
 import { useTheme } from '../../context/ThemeContext.js';
 import { ConversationList } from './ConversationList.js';
 import { ContactsList } from './ContactsList.js';
@@ -42,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user } = useAuth();
   const { conversations } = useChat();
+  const { receivedRequestsCount } = useSocket();
   const { theme, toggleTheme } = useTheme();
 
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0);
@@ -119,6 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <UserPlus size={21} />
             <span className="nav-item-label">Requests</span>
+            {receivedRequestsCount > 0 && <span className="nav-badge">{receivedRequestsCount}</span>}
           </button>
 
           <button

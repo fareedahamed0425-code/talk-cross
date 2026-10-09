@@ -87,7 +87,7 @@ flowchart TD
     subgraph CloudServices["Cloud & Data Infrastructure"]
         NeonDB[("Neon PostgreSQL\n(Encrypted Messages & Metadata)")]
         SupabaseStorage[("Supabase Storage\n(Media & Stickers)")]
-        FirebaseAuth["Firebase Authentication\n(Google OAuth)"]
+        FirebaseAuth["Firebase Authentication\n(Google & GitHub OAuth)"]
     end
 
     UI --> Router
@@ -161,7 +161,7 @@ erDiagram
 - **Node.js** (v18 or higher)
 - **Neon PostgreSQL** database account
 - **Supabase** project (Storage enabled)
-- **Firebase** project (Google Authentication enabled)
+- **Firebase** project (Google & GitHub Authentication enabled)
 
 ### 2. Clone the Repository
 ```bash

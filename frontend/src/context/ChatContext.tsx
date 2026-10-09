@@ -121,6 +121,49 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, refreshConversations]);
 
+  // Live auto-refresh when downloaded app resumes from background or regains focus
+  useEffect(() => {
+    if (!user) return;
+
+    const handleResume = async () => {
+      refreshConversations();
+      if (activeConvIdRef.current) {
+        try {
+          const res = await api.getMessages(activeConvIdRef.current);
+          const decrypted = await decryptMessagesList(res.messages, activeConvIdRef.current);
+          setMessages(decrypted);
+          setHasMoreMessages(res.hasMore);
+        } catch (e) {
+          console.error('Failed to auto-sync messages on resume:', e);
+        }
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleResume();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleResume);
+    window.addEventListener('online', handleResume);
+
+    // Periodic background sync every 20s
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        handleResume();
+      }
+    }, 20000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleResume);
+      window.removeEventListener('online', handleResume);
+      clearInterval(timer);
+    };
+  }, [user, refreshConversations]);
+
   // Fetch messages when active conversation changes
   useEffect(() => {
     if (!activeConversationId) {

@@ -23,8 +23,49 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            // Auto update check when app is brought to foreground or periodically
+            const checkUpdate = () => {
+              try {
+                reg.update();
+              } catch (e) {}
+            };
+
+            // Check every 60s
+            setInterval(checkUpdate, 60000);
+
+            // Check on focus / visibility change
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                checkUpdate();
+              }
+            });
+
+            // If a new worker is waiting, activate it immediately
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              }
+            });
+          }).catch(err => {
             console.log('ServiceWorker registration failed: ', err);
           });
         });

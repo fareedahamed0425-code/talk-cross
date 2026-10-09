@@ -14,39 +14,22 @@ interface RequestsListProps {
 }
 
 export const RequestsList: React.FC<RequestsListProps> = ({ onOpenSearch, onOpenChat }) => {
-  const { showToast } = useSocket();
+  const { showToast, receivedRequests, sentRequests, isLoadingRequests, refreshFriendRequests } = useSocket();
   const { refreshConversations } = useChat();
   const [tab, setTab] = useState<'received' | 'sent'>('received');
-  const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
-  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const fetchRequests = async () => {
-    try {
-      setIsLoading(true);
-      const res = await api.getFriendRequests();
-      setReceivedRequests(res.received);
-      setSentRequests(res.sent);
-    } catch (err) {
-      console.error('Failed to fetch friend requests:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    refreshFriendRequests();
+  }, [refreshFriendRequests]);
 
   const handleAccept = async (req: FriendRequest) => {
     try {
       setProcessingId(req.id);
       const res = await api.acceptFriendRequest({ requestId: req.id });
-      setReceivedRequests((prev) => prev.filter((r) => r.id !== req.id));
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
       showToast(`Connected with ${req.display_name}!`, 'success');
-      await refreshConversations();
+      await Promise.all([refreshFriendRequests(), refreshConversations()]);
       if (res.conversationId) {
         onOpenChat(res.conversationId);
       }
@@ -61,7 +44,7 @@ export const RequestsList: React.FC<RequestsListProps> = ({ onOpenSearch, onOpen
     try {
       setProcessingId(reqId);
       await api.rejectFriendRequest({ requestId: reqId });
-      setReceivedRequests((prev) => prev.filter((r) => r.id !== reqId));
+      await refreshFriendRequests();
       showToast('Friend request rejected', 'info');
     } catch (err: any) {
       showToast(err.message || 'Failed to reject request', 'warning');
@@ -74,7 +57,7 @@ export const RequestsList: React.FC<RequestsListProps> = ({ onOpenSearch, onOpen
     try {
       setProcessingId(reqId);
       await api.cancelFriendRequest({ requestId: reqId });
-      setSentRequests((prev) => prev.filter((r) => r.id !== reqId));
+      await refreshFriendRequests();
       showToast('Friend request cancelled', 'info');
     } catch (err: any) {
       showToast(err.message || 'Failed to cancel request', 'warning');
@@ -83,6 +66,7 @@ export const RequestsList: React.FC<RequestsListProps> = ({ onOpenSearch, onOpen
     }
   };
 
+  const isLoading = isLoadingRequests && receivedRequests.length === 0 && sentRequests.length === 0;
   const currentList = tab === 'received' ? receivedRequests : sentRequests;
 
   return (

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { api } from '../../services/api.js';
-import { Friend } from '../../types/index.js';
 import { formatLastSeen, getAvatarFallbackColor, getInitials } from '../../utils/format.js';
 import { EmptyState } from '../common/EmptyState.js';
 import { Users, Search, MessageSquare, Trash2 } from 'lucide-react';
@@ -14,26 +13,12 @@ interface ContactsListProps {
 
 export const ContactsList: React.FC<ContactsListProps> = ({ onOpenSearch, onOpenChat }) => {
   const { openDirectChatWithUser } = useChat();
-  const { isOnline, showToast } = useSocket();
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { isOnline, showToast, friends, isLoadingFriends, refreshFriends } = useSocket();
   const [searchFilter, setSearchFilter] = useState<string>('');
 
-  const fetchFriends = async () => {
-    try {
-      setIsLoading(true);
-      const res = await api.getFriends();
-      setFriends(res.friends);
-    } catch (err) {
-      console.error('Failed to load friends:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchFriends();
-  }, []);
+    refreshFriends();
+  }, [refreshFriends]);
 
   const handleStartChat = async (friendId: string) => {
     try {
@@ -50,13 +35,14 @@ export const ContactsList: React.FC<ContactsListProps> = ({ onOpenSearch, onOpen
 
     try {
       await api.removeFriend(friendId);
-      setFriends((prev) => prev.filter((f) => f.id !== friendId));
+      await refreshFriends();
       showToast(`Removed ${name} from friends`, 'info');
     } catch (err: any) {
       showToast(err.message || 'Failed to remove friend', 'warning');
     }
   };
 
+  const isLoading = isLoadingFriends && friends.length === 0;
   const filtered = friends.filter((f) => {
     if (!searchFilter.trim()) return true;
     const term = searchFilter.toLowerCase();

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth, googleProvider, signInWithPopup, fbSignOut } from '../config/firebase.js';
+import { auth, googleProvider, githubProvider, signInWithPopup, fbSignOut } from '../config/firebase.js';
 import { api } from '../services/api.js';
 import { User, UserStats } from '../types/index.js';
 
@@ -13,6 +13,7 @@ interface AuthContextType {
   error: string | null;
   isNewUserModalOpen: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithGithub: () => Promise<void>;
   signInWithDemoUser: (customName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -110,6 +111,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGithub = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const cred = await signInWithPopup(auth, githubProvider);
+      const idToken = await cred.user.getIdToken();
+      await syncWithBackend(idToken, cred.user);
+    } catch (err: any) {
+      console.error('GitHub Sign-In Error:', err);
+      if (err.code === 'auth/account-exists-with-different-credential') {
+        setError('An account already exists with the same email address using a different sign-in method.');
+      } else {
+        setError(err.message || 'GitHub Sign-In failed');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Instant developer demo user sign in (for rapid local preview)
   const signInWithDemoUser = async (customName: string = 'Fareed') => {
     try {
@@ -181,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         isNewUserModalOpen,
         signInWithGoogle,
+        signInWithGithub,
         signInWithDemoUser,
         signOut,
         refreshProfile,

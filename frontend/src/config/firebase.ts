@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut as fbSignOut, Auth } from 'firebase/auth';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -49,5 +49,8 @@ export function getFirebaseAuth(): Auth {
 
 export const auth = getFirebaseAuth();
 export const googleProvider = new GoogleAuthProvider();
+export const githubProvider = new GithubAuthProvider();
+githubProvider.addScope('read:user');
+githubProvider.addScope('user:email');
 
 export { signInWithPopup, fbSignOut };

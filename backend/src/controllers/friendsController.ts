@@ -371,6 +371,19 @@ export async function rejectFriendRequest(req: Request, res: Response): Promise<
       return;
     }
 
+    const otherUserId = result.rows[0]?.sender_id;
+    const io = getSocketIO();
+    if (io && otherUserId) {
+      io.to(`user:${otherUserId}`).emit('friend_request_rejected', {
+        receiverId: currentUserId,
+        requestId: result.rows[0].id,
+      });
+      io.to(`user:${currentUserId}`).emit('friend_request_rejected', {
+        senderId: otherUserId,
+        requestId: result.rows[0].id,
+      });
+    }
+
     res.json({ success: true, message: 'Friend request rejected' });
   } catch (error) {
     console.error('Error rejecting friend request:', error);
@@ -397,6 +410,19 @@ export async function cancelFriendRequest(req: Request, res: Response): Promise<
     } else {
       res.status(400).json({ error: 'requestId or receiverId is required' });
       return;
+    }
+
+    const otherUserId = result.rows[0]?.receiver_id || receiverId;
+    const io = getSocketIO();
+    if (io && otherUserId) {
+      io.to(`user:${otherUserId}`).emit('friend_request_cancelled', {
+        senderId: currentUserId,
+        requestId: result.rows[0]?.id || requestId,
+      });
+      io.to(`user:${currentUserId}`).emit('friend_request_cancelled', {
+        receiverId: otherUserId,
+        requestId: result.rows[0]?.id || requestId,
+      });
     }
 
     res.json({ success: true, message: 'Friend request cancelled' });
@@ -466,6 +492,12 @@ export async function removeFriend(req: Request, res: Response): Promise<void> {
           OR (sender_id = $2 AND receiver_id = $1)`,
       [currentUserId, friendId]
     );
+
+    const io = getSocketIO();
+    if (io) {
+      io.to(`user:${friendId}`).emit('friend_removed', { friendId: currentUserId });
+      io.to(`user:${currentUserId}`).emit('friend_removed', { friendId });
+    }
 
     res.json({ success: true, message: 'Friend removed' });
   } catch (error) {
