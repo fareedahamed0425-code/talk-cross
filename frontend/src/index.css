@@ -751,20 +751,90 @@ input:focus, textarea:focus {
   transform: scale(1.06);
 }
 
-/* Image in Message */
-.msg-image-wrap {
-  margin-bottom: 4px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  cursor: pointer;
-  max-width: 300px;
+/* Image Attachment in Message Bubble */
+.message-bubble.image-bubble {
+  padding: 5px 5px 6px 5px;
+  max-width: min(72%, 280px);
 }
 
+.message-image-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.message-image-preview,
+.msg-image-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 270px;
+  max-height: 240px;
+  min-width: 140px;
+  min-height: 110px;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-image,
 .msg-image {
   width: 100%;
-  max-height: 260px;
+  max-height: 240px;
   object-fit: cover;
   display: block;
+  border-radius: 10px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+
+.message-image-preview:hover .message-image,
+.msg-image-wrap:hover .msg-image {
+  transform: scale(1.03);
+  filter: brightness(0.92);
+}
+
+.message-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 45%);
+  opacity: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 8px;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.message-image-preview:hover .message-image-overlay,
+.msg-image-wrap:hover .message-image-overlay {
+  opacity: 1;
+}
+
+.image-zoom-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.2px;
+}
+
+.message-caption {
+  font-size: 13.5px;
+  line-height: 1.38;
+  padding: 2px 6px 2px 6px;
+  word-break: break-word;
 }
 
 /* Quoted Reply inside Message */
@@ -1730,4 +1800,19 @@ input:focus, textarea:focus {
 
 .group-sender-header {
   line-height: 1.2;
+}
+
+/* Custom Chat Wallpaper State */
+.messages-container.has-custom-wallpaper {
+  background-color: transparent !important;
+  transition: background-image 0.25s ease-in-out;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

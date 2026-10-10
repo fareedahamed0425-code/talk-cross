@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
 import { Message } from '../../types/index.js';
 import { formatMessageTime, getAvatarFallbackColor, resolveMediaUrl } from '../../utils/format.js';
-import { Reply, Edit3, Trash2, Copy, MoreHorizontal } from 'lucide-react';
+import { Reply, Edit3, Trash2, Copy, MoreHorizontal, ZoomIn } from 'lucide-react';
 import { MessageStatusTicks } from './MessageStatusTicks.js';
 
 interface MessageBubbleProps {
@@ -172,7 +172,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
       )}
 
       <div
-        className={`message-bubble ${isSticker ? 'sticker-bubble' : ''}`}
+        className={`message-bubble ${isSticker ? 'sticker-bubble' : ''} ${isImage ? 'image-bubble' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -233,16 +233,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
             />
           </div>
         ) : isImage ? (
-          <div>
-            <img
-              src={resolveMediaUrl(message.media_url)}
-              alt="Attachment"
-              className="message-image"
+          <div className="message-image-container">
+            <div
+              className="message-image-preview"
               onClick={() => {
                 const url = resolveMediaUrl(message.media_url);
                 if (url) onOpenImage(url);
               }}
-            />
+              title="Click to view image"
+            >
+              <img
+                src={resolveMediaUrl(message.media_url)}
+                alt="Image attachment"
+                className="message-image"
+                loading="lazy"
+              />
+              <div className="message-image-overlay">
+                <span className="image-zoom-hint">
+                  <ZoomIn size={12} />
+                  <span>View</span>
+                </span>
+              </div>
+            </div>
             {message.content && <div className="message-caption">{message.content}</div>}
           </div>
         ) : (

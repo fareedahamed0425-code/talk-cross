@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from '../../context/ChatContext.js';
 import { formatDateDivider } from '../../utils/format.js';
 import { MessageBubble } from './MessageBubble.js';
+import { useChatWallpaper } from '../../utils/chatWallpaperStorage.js';
 import { ChevronDown } from 'lucide-react';
 
 interface MessageListProps {
@@ -9,7 +10,8 @@ interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ onOpenImage }) => {
-  const { messages, isLoadingMessages, hasMoreMessages, loadMoreMessages, typingUsers } = useChat();
+  const { activeConversation, messages, isLoadingMessages, hasMoreMessages, loadMoreMessages, typingUsers } = useChat();
+  const wallpaper = useChatWallpaper(activeConversation?.id);
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollBottom, setShowScrollBottom] = useState<boolean>(false);
@@ -62,11 +64,22 @@ export const MessageList: React.FC<MessageListProps> = ({ onOpenImage }) => {
     return elements;
   };
 
+  const wallpaperStyle: React.CSSProperties = wallpaper
+    ? {
+        backgroundImage: `linear-gradient(rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65}), rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65})), url("${wallpaper.dataUrl}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'local',
+      }
+    : {};
+
   return (
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="messages-container"
+      className={`messages-container ${wallpaper ? 'has-custom-wallpaper' : ''}`}
+      style={wallpaperStyle}
     >
       {/* Load More Trigger */}
       {hasMoreMessages && (

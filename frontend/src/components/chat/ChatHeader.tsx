@@ -3,7 +3,7 @@ import { useSocket } from '../../context/SocketContext.js';
 import { useChatPrivacy } from '../../utils/chatPrivacy.js';
 import { Conversation } from '../../types/index.js';
 import { formatLastSeen, getAvatarFallbackColor, getInitials } from '../../utils/format.js';
-import { ArrowLeft, PanelLeftOpen, ShieldCheck, Users } from 'lucide-react';
+import { ArrowLeft, PanelLeftOpen, ShieldCheck, Users, Palette } from 'lucide-react';
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -11,6 +11,8 @@ interface ChatHeaderProps {
   typingText?: string | null;
   isSidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
+  onOpenWallpaper?: () => void;
+  hasCustomWallpaper?: boolean;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -19,6 +21,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   typingText,
   isSidebarCollapsed,
   onToggleSidebar,
+  onOpenWallpaper,
+  hasCustomWallpaper,
 }) => {
   const { isOnline } = useSocket();
   const privacy = useChatPrivacy();
@@ -113,18 +117,55 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
       </div>
 
-      {/* Desktop Header Badges */}
-      <div className="chat-header-actions desktop-only-flex">
-        <div className="chat-header-e2ee-badge" title="Messages are protected with End-to-End Encryption (AES-256-GCM).">
-          <ShieldCheck size={14} color="#10b981" />
-          <span>End-to-end encrypted</span>
-        </div>
-
-        {!isGroup && (
-          <div className="chat-header-username-badge">
-            @{user.username}
-          </div>
+      {/* Header Actions */}
+      <div className="chat-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Custom Wallpaper Option */}
+        {onOpenWallpaper && (
+          <button
+            onClick={onOpenWallpaper}
+            className="icon-btn"
+            style={{
+              position: 'relative',
+              width: '34px',
+              height: '34px',
+              borderRadius: '8px',
+              color: hasCustomWallpaper ? 'var(--burgundy-300, #fda4af)' : 'var(--text-secondary)',
+              backgroundColor: hasCustomWallpaper ? 'rgba(225, 29, 72, 0.16)' : undefined,
+              border: hasCustomWallpaper ? '1px solid rgba(225, 29, 72, 0.35)' : undefined,
+            }}
+            title={hasCustomWallpaper ? 'Chat Wallpaper Active (Click to edit)' : 'Customize Chat Background / Wallpaper'}
+            aria-label="Customize Chat Background"
+          >
+            <Palette size={18} />
+            {hasCustomWallpaper && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '5px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--burgundy-primary, #e11d48)',
+                  boxShadow: '0 0 6px rgba(225, 29, 72, 0.9)',
+                }}
+              />
+            )}
+          </button>
         )}
+
+        <div className="desktop-only-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="chat-header-e2ee-badge" title="Messages are protected with End-to-End Encryption (AES-256-GCM).">
+            <ShieldCheck size={14} color="#10b981" />
+            <span>End-to-end encrypted</span>
+          </div>
+
+          {!isGroup && (
+            <div className="chat-header-username-badge">
+              @{user.username}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

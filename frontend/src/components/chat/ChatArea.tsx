@@ -4,6 +4,9 @@ import { ChatHeader } from './ChatHeader.js';
 import { MessageList } from './MessageList.js';
 import { ChatComposer } from './ChatComposer.js';
 import { ImagePreviewModal } from './ImagePreviewModal.js';
+import { ChatWallpaperModal } from './ChatWallpaperModal.js';
+import { useChatWallpaper } from '../../utils/chatWallpaperStorage.js';
+import { resolveMediaUrl } from '../../utils/format.js';
 import { EmptyState } from '../common/EmptyState.js';
 import { MessageSquare, PanelLeftOpen, ChevronLeft } from 'lucide-react';
 
@@ -20,8 +23,23 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   isSidebarCollapsed,
   onToggleSidebar,
 }) => {
-  const { activeConversation, typingUsers } = useChat();
+  const { activeConversation, messages, typingUsers } = useChat();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showWallpaperModal, setShowWallpaperModal] = useState<boolean>(false);
+  const currentWallpaper = useChatWallpaper(activeConversation?.id);
+
+  // Collect all images in current active conversation for gallery view
+  const conversationImages = React.useMemo(() => {
+    return messages
+      .filter((m) => !m.is_deleted && m.message_type === 'image' && m.media_url)
+      .map((m) => ({
+        id: m.id,
+        url: resolveMediaUrl(m.media_url),
+        caption: m.content || undefined,
+        createdAt: m.created_at,
+        senderName: m.sender?.display_name || undefined,
+      }));
+  }, [messages]);
 
   // Mobile edge swipe-to-go-back gesture state
   const touchStartX = useRef<number>(0);
@@ -95,6 +113,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   const typingUser = typingUsers[0];
   const typingText = typingUser ? `${typingUser.display_name} is typing...` : null;
 
+  const isGroup = !!activeConversation.is_group;
+  const displayName = isGroup ? (activeConversation.title || 'Group Chat') : (activeConversation.other_user?.display_name || 'Chat');
+
   return (
     <main
       className="chat-area"
@@ -140,6 +161,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         typingText={typingText}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
+        onOpenWallpaper={() => setShowWallpaperModal(true)}
+        hasCustomWallpaper={!!currentWallpaper}
       />
 
       {/* 2. Message History Thread */}
@@ -152,6 +175,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       <ImagePreviewModal
         imageUrl={lightboxImage}
         onClose={() => setLightboxImage(null)}
+        images={conversationImages}
+      />
+
+      {/* 5. Custom Chat Wallpaper Modal */}
+      <ChatWallpaperModal
+        conversationId={activeConversation.id}
+        conversationTitle={displayName}
+        isOpen={showWallpaperModal}
+        onClose={() => setShowWallpaperModal(false)}
       />
     </main>
   );
