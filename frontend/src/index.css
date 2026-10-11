@@ -1498,6 +1498,42 @@ input:focus, textarea:focus {
     height: 100dvh;
     height: -webkit-fill-available;
     overscroll-behavior-y: none;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Completely hide scroll lines & scrollbars across all elements on mobile */
+  *,
+  *::before,
+  *::after,
+  .messages-container,
+  .conversations-list,
+  .sidebar-panel-body,
+  .sidebar-panel,
+  .chat-area,
+  .modal-body {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+  }
+
+  *::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-thumb,
+  ::-webkit-scrollbar-thumb {
+    width: 0px !important;
+    height: 0px !important;
+    display: none !important;
+    background: transparent !important;
+    border: none !important;
   }
 
   .desktop-only,
@@ -1742,6 +1778,41 @@ input:focus, textarea:focus {
     right: 8px;
     width: auto;
     max-height: 280px;
+  }
+}
+
+/* Touchscreens / Mobile Devices: Ensure scroll lines remain invisible regardless of orientation */
+@media (hover: none) and (pointer: coarse) {
+  html, body, #root,
+  *, *::before, *::after,
+  .messages-container,
+  .conversations-list,
+  .sidebar-panel-body,
+  .sidebar-panel,
+  .chat-area,
+  .modal-body {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  *::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    width: 0px !important;
+    height: 0px !important;
+    display: none !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+  }
+
+  *::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-thumb,
+  ::-webkit-scrollbar-thumb {
+    width: 0px !important;
+    height: 0px !important;
+    display: none !important;
+    background: transparent !important;
+    border: none !important;
   }
 }
 
