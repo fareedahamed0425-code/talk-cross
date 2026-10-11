@@ -64,74 +64,99 @@ export const MessageList: React.FC<MessageListProps> = ({ onOpenImage }) => {
     return elements;
   };
 
-  const wallpaperStyle: React.CSSProperties = wallpaper
-    ? {
-        backgroundImage: `linear-gradient(rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65}), rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65})), url("${wallpaper.dataUrl}")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'local',
-      }
-    : {};
-
   return (
     <div
-      ref={containerRef}
-      onScroll={handleScroll}
-      className={`messages-container ${wallpaper ? 'has-custom-wallpaper' : ''}`}
-      style={wallpaperStyle}
+      className="messages-thread-wrapper"
+      style={{
+        position: 'relative',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
     >
-      {/* Load More Trigger */}
-      {hasMoreMessages && (
-        <div style={{ textAlign: 'center', margin: '8px 0' }}>
-          <button
-            className="btn-secondary"
-            onClick={loadMoreMessages}
-            disabled={isLoadingMessages}
-            style={{ fontSize: '12px', padding: '5px 12px' }}
-          >
-            {isLoadingMessages ? 'Loading older messages...' : 'Load older messages'}
-          </button>
-        </div>
-      )}
-
-      {/* Messages */}
-      {messages.length === 0 && !isLoadingMessages ? (
+      {/* Fixed Wallpaper Backdrop Layer: stays crisp, properly scaled, and fixed behind message bubbles */}
+      {wallpaper && (
         <div
+          className="chat-wallpaper-layer"
           style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-muted)',
-            textAlign: 'center',
-            padding: '40px',
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `linear-gradient(rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65}), rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65})), url("${wallpaper.dataUrl}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            pointerEvents: 'none',
+            zIndex: 0,
           }}
-        >
-          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
-            No messages yet
-          </div>
-          <div style={{ fontSize: '13.5px', maxWidth: '300px' }}>
-            Say hello to start the conversation!
-          </div>
-        </div>
-      ) : (
-        renderMessagesWithDates()
+        />
       )}
 
-      {/* Real-Time Typing Bubble */}
-      {typingUsers.length > 0 && (
-        <div className="message-row received">
-          <div className="typing-bubble">
-            <div className="typing-dot" />
-            <div className="typing-dot" />
-            <div className="typing-dot" />
+      {/* Scrollable Messages Container */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className={`messages-container ${wallpaper ? 'has-custom-wallpaper' : ''}`}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          backgroundColor: wallpaper ? 'transparent' : undefined,
+          backgroundImage: wallpaper ? 'none' : undefined,
+        }}
+      >
+        {/* Load More Trigger */}
+        {hasMoreMessages && (
+          <div style={{ textAlign: 'center', margin: '8px 0' }}>
+            <button
+              className="btn-secondary"
+              onClick={loadMoreMessages}
+              disabled={isLoadingMessages}
+              style={{ fontSize: '12px', padding: '5px 12px' }}
+            >
+              {isLoadingMessages ? 'Loading older messages...' : 'Load older messages'}
+            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <div ref={bottomRef} style={{ height: '1px' }} />
+        {/* Messages */}
+        {messages.length === 0 && !isLoadingMessages ? (
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-muted)',
+              textAlign: 'center',
+              padding: '40px',
+            }}
+          >
+            <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+              No messages yet
+            </div>
+            <div style={{ fontSize: '13.5px', maxWidth: '300px' }}>
+              Say hello to start the conversation!
+            </div>
+          </div>
+        ) : (
+          renderMessagesWithDates()
+        )}
+
+        {/* Real-Time Typing Bubble */}
+        {typingUsers.length > 0 && (
+          <div className="message-row received">
+            <div className="typing-bubble">
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+            </div>
+          </div>
+        )}
+
+        <div ref={bottomRef} style={{ height: '1px' }} />
+      </div>
 
       {/* Floating Scroll to Bottom Button */}
       {showScrollBottom && (
@@ -140,7 +165,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onOpenImage }) => {
           className="icon-btn"
           style={{
             position: 'absolute',
-            bottom: '80px',
+            bottom: '20px',
             right: '24px',
             backgroundColor: 'var(--bg-card)',
             color: 'var(--text-primary)',

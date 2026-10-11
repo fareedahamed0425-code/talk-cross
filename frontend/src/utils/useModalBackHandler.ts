@@ -12,6 +12,8 @@ export function useModalBackHandler(
   modalName: string = 'modal'
 ) {
   const isPushedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (isOpen) {
@@ -22,7 +24,7 @@ export function useModalBackHandler(
       const handlePopState = () => {
         // If back was pressed, close the modal
         isPushedRef.current = false;
-        onClose();
+        onCloseRef.current();
       };
 
       window.addEventListener('popstate', handlePopState);
@@ -36,5 +38,5 @@ export function useModalBackHandler(
         }
       };
     }
-  }, [isOpen, modalName, onClose]);
+  }, [isOpen, modalName]);
 }

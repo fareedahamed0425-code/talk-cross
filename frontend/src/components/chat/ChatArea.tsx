@@ -28,6 +28,14 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   const [showWallpaperModal, setShowWallpaperModal] = useState<boolean>(false);
   const currentWallpaper = useChatWallpaper(activeConversation?.id);
 
+  const handleOpenWallpaper = React.useCallback(() => {
+    setShowWallpaperModal(true);
+  }, []);
+
+  const handleCloseWallpaper = React.useCallback(() => {
+    setShowWallpaperModal(false);
+  }, []);
+
   // Collect all images in current active conversation for gallery view
   const conversationImages = React.useMemo(() => {
     return messages
@@ -161,7 +169,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         typingText={typingText}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
-        onOpenWallpaper={() => setShowWallpaperModal(true)}
+        onOpenWallpaper={handleOpenWallpaper}
         hasCustomWallpaper={!!currentWallpaper}
       />
 
@@ -183,7 +191,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         conversationId={activeConversation.id}
         conversationTitle={displayName}
         isOpen={showWallpaperModal}
-        onClose={() => setShowWallpaperModal(false)}
+        onClose={handleCloseWallpaper}
       />
     </main>
   );

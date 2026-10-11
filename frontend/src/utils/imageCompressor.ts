@@ -63,13 +63,18 @@ export async function compressImageTo50KB(file: File): Promise<CompressionResult
           const TARGET_MAX_BYTES = 52 * 1024; // 53,248 bytes
           const TARGET_MIN_BYTES = 30 * 1024; // 30,720 bytes
 
+          if (!img.width || !img.height) {
+            reject(new Error('Invalid image dimensions'));
+            return;
+          }
+
           const mimeType = 'image/webp'; // WebP achieves superior visual fidelity at low byte budgets
 
           let currentQuality = 0.82;
           let currentWidth = targetWidth;
           let currentHeight = targetHeight;
-          let bestDataUrl = '';
-          let bestSizeBytes = Infinity;
+          let bestDataUrl = (reader.result as string) || '';
+          let bestSizeBytes = originalSizeBytes;
 
           // Helper to calculate raw byte size from Data URL
           const getByteSize = (dataUrlStr: string): number => {

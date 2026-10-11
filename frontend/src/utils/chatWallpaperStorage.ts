@@ -11,39 +11,89 @@ export interface ChatWallpaper {
 const STORAGE_PREFIX = 'talkcross_chat_wallpaper_';
 const WALLPAPER_EVENT = 'talkcross_wallpaper_updated';
 
+// In-memory cache for fast access and fallback if localStorage quota is reached
+const memoryWallpaperCache = new Map<string, ChatWallpaper>();
+
 /**
  * Get saved wallpaper for a conversation
  */
 export function getChatWallpaper(conversationId: string): ChatWallpaper | null {
   if (!conversationId || typeof window === 'undefined') return null;
+
+  // 1. Check in-memory cache first
+  if (memoryWallpaperCache.has(conversationId)) {
+    return memoryWallpaperCache.get(conversationId)!;
+  }
+
+  // 2. Check localStorage
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${conversationId}`);
-    if (!raw) return null;
-    return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      memoryWallpaperCache.set(conversationId, parsed);
+      return parsed;
+    }
   } catch (e) {
-    console.error('Failed to parse chat wallpaper:', e);
-    return null;
+    console.warn('Failed to parse chat wallpaper from localStorage:', e);
   }
+
+  // 3. Fallback to sessionStorage
+  try {
+    const rawSession = sessionStorage.getItem(`${STORAGE_PREFIX}${conversationId}`);
+    if (rawSession) {
+      const parsed = JSON.parse(rawSession);
+      memoryWallpaperCache.set(conversationId, parsed);
+      return parsed;
+    }
+  } catch (_) {}
+
+  return null;
 }
 
 /**
  * Save wallpaper for a conversation and broadcast change
  */
-export function saveChatWallpaper(wallpaper: ChatWallpaper): void {
-  if (typeof window === 'undefined') return;
+export function saveChatWallpaper(wallpaper: ChatWallpaper): boolean {
+  if (typeof window === 'undefined' || !wallpaper.conversationId) return false;
+
+  // Store in memory cache immediately
+  memoryWallpaperCache.set(wallpaper.conversationId, wallpaper);
+
+  let saved = false;
+  // Try persisting to localStorage
   try {
     localStorage.setItem(
       `${STORAGE_PREFIX}${wallpaper.conversationId}`,
       JSON.stringify(wallpaper)
     );
+    saved = true;
+  } catch (e) {
+    console.warn('localStorage write failed (quota or restriction), falling back to sessionStorage:', e);
+    try {
+      sessionStorage.setItem(
+        `${STORAGE_PREFIX}${wallpaper.conversationId}`,
+        JSON.stringify(wallpaper)
+      );
+      saved = true;
+    } catch (sessionErr) {
+      console.warn('sessionStorage write also failed, retaining in-memory:', sessionErr);
+      // Still saved in memory cache for the active session
+      saved = true;
+    }
+  }
+
+  // Broadcast event across components and tabs
+  try {
     window.dispatchEvent(
       new CustomEvent(WALLPAPER_EVENT, {
         detail: { conversationId: wallpaper.conversationId },
       })
     );
-  } catch (e) {
-    console.error('Failed to save chat wallpaper:', e);
+  } catch (eventErr) {
+    console.error('Failed to dispatch wallpaper event:', eventErr);
   }
+
+  return saved;
 }
 
 /**
@@ -51,15 +101,27 @@ export function saveChatWallpaper(wallpaper: ChatWallpaper): void {
  */
 export function removeChatWallpaper(conversationId: string): void {
   if (typeof window === 'undefined') return;
+
+  memoryWallpaperCache.delete(conversationId);
+
   try {
     localStorage.removeItem(`${STORAGE_PREFIX}${conversationId}`);
+  } catch (e) {
+    console.error('Failed to remove chat wallpaper from localStorage:', e);
+  }
+
+  try {
+    sessionStorage.removeItem(`${STORAGE_PREFIX}${conversationId}`);
+  } catch (_) {}
+
+  try {
     window.dispatchEvent(
       new CustomEvent(WALLPAPER_EVENT, {
         detail: { conversationId },
       })
     );
   } catch (e) {
-    console.error('Failed to remove chat wallpaper:', e);
+    console.error('Failed to dispatch wallpaper removal event:', e);
   }
 }
 

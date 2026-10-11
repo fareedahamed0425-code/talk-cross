@@ -1803,9 +1803,20 @@ input:focus, textarea:focus {
 }
 
 /* Custom Chat Wallpaper State */
+.chat-wallpaper-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease, background-image 0.3s ease;
+}
+
 .messages-container.has-custom-wallpaper {
   background-color: transparent !important;
-  transition: background-image 0.25s ease-in-out;
+  background-image: none !important;
 }
 
 @keyframes spin {

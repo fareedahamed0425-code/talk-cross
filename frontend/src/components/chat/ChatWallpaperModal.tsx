@@ -37,6 +37,7 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
   useModalBackHandler(isOpen, onClose, 'chat-wallpaper');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevOpenRef = useRef<boolean>(false);
   const [existingWallpaper, setExistingWallpaper] = useState<ChatWallpaper | null>(null);
 
   // Staged wallpaper state
@@ -44,33 +45,34 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
   const [overlayDim, setOverlayDim] = useState<number>(0.65);
   const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
 
-  // Initialize from current saved wallpaper
+  // Initialize from current saved wallpaper ONLY when modal transitions from closed to open
   useEffect(() => {
-    if (isOpen && conversationId) {
-      const current = getChatWallpaper(conversationId);
-      setExistingWallpaper(current);
-      if (current) {
-        setPreviewDataUrl(current.dataUrl);
-        setOverlayDim(current.overlayDim ?? 0.65);
-      } else {
-        setPreviewDataUrl(null);
-        setOverlayDim(0.65);
+    if (isOpen && (!prevOpenRef.current || !existingWallpaper)) {
+      if (conversationId) {
+        const current = getChatWallpaper(conversationId);
+        setExistingWallpaper(current);
+        if (current) {
+          setPreviewDataUrl(current.dataUrl);
+          setOverlayDim(current.overlayDim ?? 0.65);
+        } else {
+          setPreviewDataUrl(null);
+          setOverlayDim(0.65);
+        }
       }
       setCompressionResult(null);
       setErrorMsg(null);
       setSavedSuccess(false);
     }
+    prevOpenRef.current = isOpen;
   }, [isOpen, conversationId]);
 
   if (!isOpen) return null;
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processSelectedFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setErrorMsg('Please select a valid image file (JPG, PNG, WebP).');
       return;
@@ -94,10 +96,37 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processSelectedFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await processSelectedFile(file);
+  };
+
   const handleApply = () => {
     if (!previewDataUrl || !conversationId) return;
 
-    saveChatWallpaper({
+    const saved = saveChatWallpaper({
       conversationId,
       dataUrl: previewDataUrl,
       overlayDim,
@@ -105,10 +134,14 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
       updatedAt: new Date().toISOString(),
     });
 
-    setSavedSuccess(true);
-    setTimeout(() => {
-      onClose();
-    }, 450);
+    if (saved) {
+      setSavedSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 400);
+    } else {
+      setErrorMsg('Unable to save chat background. Please try another image.');
+    }
   };
 
   const handleReset = () => {
@@ -225,13 +258,20 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             disabled={isCompressing}
             style={{
               width: '100%',
               padding: '18px 16px',
               borderRadius: '12px',
-              border: '1.5px dashed rgba(255, 255, 255, 0.2)',
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: isDragOver
+                ? '1.5px dashed var(--burgundy-primary, #e11d48)'
+                : '1.5px dashed rgba(255, 255, 255, 0.2)',
+              backgroundColor: isDragOver
+                ? 'rgba(225, 29, 72, 0.12)'
+                : 'rgba(255, 255, 255, 0.03)',
               color: '#ffffff',
               display: 'flex',
               flexDirection: 'column',
@@ -246,8 +286,10 @@ export const ChatWallpaperModal: React.FC<ChatWallpaperModalProps> = ({
               e.currentTarget.style.backgroundColor = 'rgba(225, 29, 72, 0.06)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+              if (!isDragOver) {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+              }
             }}
           >
             {isCompressing ? (
