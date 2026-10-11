@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { useChat } from '../../context/ChatContext.js';
+import { useSocket } from '../../context/SocketContext.js';
 import { Message } from '../../types/index.js';
 import { formatMessageTime, getAvatarFallbackColor, resolveMediaUrl } from '../../utils/format.js';
 import { Reply, Edit3, Trash2, Copy, MoreHorizontal, ZoomIn } from 'lucide-react';
@@ -14,6 +15,7 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenImage }) => {
   const { user } = useAuth();
   const { activeConversation, startReply, startEdit, deleteMessage } = useChat();
+  const { isOnline } = useSocket();
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -265,16 +267,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
         <div className="message-meta">
           {isEdited && <span className="edited-badge">edited</span>}
           <span className="message-time">{formatMessageTime(message.created_at)}</span>
-          {isSent && !isDeleted && (
-            <span className="message-status">
-              <MessageStatusTicks
-                sending={message.sending}
-                isRead={message.is_read}
-                size={16}
-                variant="bubble"
-              />
-            </span>
-          )}
+          {isSent && !isDeleted && (() => {
+            const isDirect = !activeConversation?.is_group;
+            const recipientId = isDirect ? activeConversation?.other_user?.id : undefined;
+            const isRecipientOnline = recipientId ? isOnline(recipientId) : false;
+            const isDelivered = Boolean(message.is_delivered || isRecipientOnline);
+
+            return (
+              <span className="message-status">
+                <MessageStatusTicks
+                  sending={message.sending}
+                  isDelivered={isDelivered}
+                  isRead={message.is_read}
+                  size={16}
+                  variant="bubble"
+                />
+              </span>
+            );
+          })()}
         </div>
 
         {/* Action Trigger Menu Button */}

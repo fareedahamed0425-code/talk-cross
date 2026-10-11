@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { query, getClient } from '../config/db.js';
-import { getSocketIO } from '../sockets/socketHandler.js';
+import { getSocketIO, isUserOnline } from '../sockets/socketHandler.js';
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
@@ -72,7 +72,20 @@ export async function getConversationMessages(req: Request, res: Response): Prom
         EXISTS (
           SELECT 1 FROM message_reads mr 
           WHERE mr.message_id = m.id AND mr.user_id != m.sender_id
-        ) AS is_read
+        ) AS is_read,
+        -- Delivered info: either read, or recipient was online/seen after message was sent
+        (
+          EXISTS (
+            SELECT 1 FROM message_reads mr 
+            WHERE mr.message_id = m.id AND mr.user_id != m.sender_id
+          ) OR EXISTS (
+            SELECT 1 FROM conversation_members cm
+            JOIN users ou ON ou.id = cm.user_id
+            WHERE cm.conversation_id = m.conversation_id 
+              AND cm.user_id != m.sender_id
+              AND (ou.online_status = TRUE OR ou.last_seen >= m.created_at)
+          )
+        ) AS is_delivered
       FROM messages m
       LEFT JOIN users u ON u.id = m.sender_id
       LEFT JOIN messages rm ON rm.id = m.reply_to_message_id
@@ -122,6 +135,7 @@ export async function getConversationMessages(req: Request, res: Response): Prom
       deleted_at: row.deleted_at,
       is_deleted: !!row.deleted_at,
       is_read: !!row.is_read,
+      is_delivered: !!row.is_read || !!row.is_delivered,
       sender: row.sender_id
         ? {
             id: row.sender_id,
@@ -265,6 +279,9 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
         return;
       }
 
+      const otherMembers = membership.rows.filter((m) => m.user_id !== userObj.id);
+      const isDelivered = otherMembers.some((m) => isUserOnline(m.user_id));
+
       const fullMessage = {
         id: rawMsg.id,
         conversation_id: rawMsg.conversation_id,
@@ -283,6 +300,7 @@ export async function sendMessage(req: Request, res: Response): Promise<void> {
         deleted_at: null,
         is_deleted: false,
         is_read: false,
+        is_delivered: isDelivered,
         sender: {
           id: userObj.id,
           username: userObj.username,

@@ -43,6 +43,22 @@ export async function getConversations(req: Request, res: Response): Promise<voi
         lm_user.display_name AS last_message_sender_name,
         lm.created_at AS last_message_created_at,
         lm.deleted_at AS last_message_deleted_at,
+        EXISTS (
+          SELECT 1 FROM message_reads mr
+          WHERE mr.message_id = lm.id AND mr.user_id != $1
+        ) AS last_message_is_read,
+        (
+          EXISTS (
+            SELECT 1 FROM message_reads mr
+            WHERE mr.message_id = lm.id AND mr.user_id != $1
+          ) OR EXISTS (
+            SELECT 1 FROM conversation_members ocm
+            JOIN users ou ON ou.id = ocm.user_id
+            WHERE ocm.conversation_id = c.id
+              AND ocm.user_id != $1
+              AND (ou.online_status = TRUE OR ou.last_seen >= lm.created_at)
+          )
+        ) AS last_message_is_delivered,
         -- Unread messages count for current user
         COUNT(DISTINCT unread.id) AS unread_count
       FROM conversation_members cm
@@ -118,6 +134,8 @@ export async function getConversations(req: Request, res: Response): Promise<voi
               sender_name: row.last_message_sender_name,
               created_at: row.last_message_created_at,
               is_deleted: !!row.last_message_deleted_at,
+              is_read: !!row.last_message_is_read,
+              is_delivered: !!row.last_message_is_delivered,
             }
           : null,
         unread_count: parseInt(row.unread_count || '0', 10),

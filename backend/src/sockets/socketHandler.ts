@@ -84,6 +84,9 @@ export function initSocketIO(server: HttpServer, allowedOrigins: string[] | stri
     // Join personal user room for direct notifications
     socket.join(`user:${userId}`);
 
+    // Send currently online user IDs to connecting socket
+    socket.emit('online_users', Array.from(activeUserSockets.keys()));
+
     // If first socket connection, mark user as online in DB & notify
     if (isFirstConnection) {
       try {
@@ -92,6 +95,11 @@ export function initSocketIO(server: HttpServer, allowedOrigins: string[] | stri
           userId,
           online_status: true,
           last_seen: new Date().toISOString(),
+        });
+
+        // Broadcast to senders that messages sent to this recipient are now delivered (double ticks)
+        socket.broadcast.emit('messages_delivered_update', {
+          recipientId: userId,
         });
       } catch (err) {
         console.error('Error updating online status:', err);

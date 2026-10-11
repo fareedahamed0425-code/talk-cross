@@ -272,6 +272,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       refreshAllData();
     });
 
+    s.on('online_users', (userIds: string[]) => {
+      if (Array.isArray(userIds)) {
+        setOnlineUserIds(new Set(userIds));
+      }
+    });
+
     s.on('disconnect', () => {
       console.log('❌ Disconnected from socket');
       setIsConnected(false);

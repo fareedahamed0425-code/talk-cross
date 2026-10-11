@@ -83,6 +83,7 @@ export interface Message {
   deleted_at: string | null;
   is_deleted: boolean;
   is_read: boolean;
+  is_delivered?: boolean;
   sender?: {
     id: string;
     username: string;
@@ -130,6 +131,9 @@ export interface Conversation {
     sender_name?: string;
     created_at: string;
     is_deleted: boolean;
+    is_read?: boolean;
+    is_delivered?: boolean;
+    sending?: boolean;
   } | null;
   unread_count: number;
 }

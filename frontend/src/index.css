@@ -895,7 +895,35 @@ input:focus, textarea:focus {
   flex-shrink: 0;
 }
 
-/* Delivered / Unread State: Crisp, high-contrast double ticks */
+/* Pending / Waiting for Network (Clock) */
+.status-ticks-wrap.is-pending {
+  color: rgba(255, 255, 255, 0.72);
+  opacity: 0.85;
+}
+
+.status-ticks-wrap.is-pending.variant-sidebar {
+  color: var(--text-muted);
+}
+
+.status-clock-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Sent to server, recipient offline (Single Tick) */
+.status-ticks-wrap.is-sent.variant-bubble {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.status-ticks-wrap.is-sent.variant-sidebar {
+  color: var(--text-muted);
+}
+
+[data-theme='light'] .message-row.sent .status-ticks-wrap.is-sent.variant-bubble {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Delivered / Recipient Online (Double Grey Ticks) */
 .status-ticks-wrap.is-delivered.variant-bubble {
   color: rgba(255, 255, 255, 0.88);
 }

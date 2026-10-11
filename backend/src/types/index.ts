@@ -83,6 +83,7 @@ export interface MessageWithSender extends DbMessage {
   } | null;
   read_by?: string[];
   is_read?: boolean;
+  is_delivered?: boolean;
 }
 
 export interface ConversationSummary {
@@ -105,6 +106,8 @@ export interface ConversationSummary {
     sender_id: string | null;
     created_at: Date;
     is_deleted: boolean;
+    is_read?: boolean;
+    is_delivered?: boolean;
   } | null;
   unread_count: number;
 }

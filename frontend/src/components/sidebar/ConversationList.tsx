@@ -232,13 +232,22 @@ export const ConversationList: React.FC<ConversationListProps> = ({ onOpenSearch
                           </span>
                         ) : (
                           <>
-                            {lastMsg.sender_id === currentUser?.id && (
-                              <MessageStatusTicks
-                                isRead={conv.unread_count === 0}
-                                size={14}
-                                variant="sidebar"
-                              />
-                            )}
+                            {lastMsg.sender_id === currentUser?.id && (() => {
+                              const isDirect = !conv.is_group;
+                              const recipientOnline = isDirect && conv.other_user?.id ? isOnline(conv.other_user.id) : false;
+                              const isDelivered = Boolean(lastMsg.is_delivered || recipientOnline);
+                              const isRead = Boolean(lastMsg.is_read);
+
+                              return (
+                                <MessageStatusTicks
+                                  sending={lastMsg.sending}
+                                  isDelivered={isDelivered}
+                                  isRead={isRead}
+                                  size={14}
+                                  variant="sidebar"
+                                />
+                              );
+                            })()}
                             {lastMsg.message_type === 'image' ? (
                               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <ImageIcon size={13} /> Photo
