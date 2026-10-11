@@ -4,7 +4,7 @@ import { useChat } from '../../context/ChatContext.js';
 import { useSocket } from '../../context/SocketContext.js';
 import { Message } from '../../types/index.js';
 import { formatMessageTime, getAvatarFallbackColor, resolveMediaUrl } from '../../utils/format.js';
-import { Reply, Edit3, Trash2, Copy, MoreHorizontal, ZoomIn } from 'lucide-react';
+import { Reply, Edit3, Trash2, Copy, MoreHorizontal, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import { MessageStatusTicks } from './MessageStatusTicks.js';
 
 interface MessageBubbleProps {
@@ -17,6 +17,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
   const { activeConversation, startReply, startEdit, deleteMessage } = useChat();
   const { isOnline } = useSocket();
   const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close context menu when clicking outside
@@ -236,27 +237,48 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOpenIma
           </div>
         ) : isImage ? (
           <div className="message-image-container">
-            <div
-              className="message-image-preview"
-              onClick={() => {
-                const url = resolveMediaUrl(message.media_url);
-                if (url) onOpenImage(url);
-              }}
-              title="Click to view image"
-            >
-              <img
-                src={resolveMediaUrl(message.media_url)}
-                alt="Image attachment"
-                className="message-image"
-                loading="lazy"
-              />
-              <div className="message-image-overlay">
-                <span className="image-zoom-hint">
-                  <ZoomIn size={12} />
-                  <span>View</span>
-                </span>
+            {imageError ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  border: '1px dashed rgba(255, 255, 255, 0.2)',
+                  color: 'rgba(255, 255, 255, 0.75)',
+                  fontSize: '12.5px',
+                  fontStyle: 'italic',
+                }}
+              >
+                <ImageIcon size={18} style={{ opacity: 0.6, flexShrink: 0 }} />
+                <span>Photo unavailable</span>
               </div>
-            </div>
+            ) : (
+              <div
+                className="message-image-preview"
+                onClick={() => {
+                  const url = resolveMediaUrl(message.media_url);
+                  if (url) onOpenImage(url);
+                }}
+                title="Click to view image"
+              >
+                <img
+                  src={resolveMediaUrl(message.media_url)}
+                  alt="Image attachment"
+                  className="message-image"
+                  loading="lazy"
+                  onError={() => setImageError(true)}
+                />
+                <div className="message-image-overlay">
+                  <span className="image-zoom-hint">
+                    <ZoomIn size={12} />
+                    <span>View</span>
+                  </span>
+                </div>
+              </div>
+            )}
             {message.content && <div className="message-caption">{message.content}</div>}
           </div>
         ) : (

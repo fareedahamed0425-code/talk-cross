@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useModalBackHandler } from '../../utils/useModalBackHandler.js';
 import { formatMessageTime } from '../../utils/format.js';
+import { useSocket } from '../../context/SocketContext.js';
 
 export interface GalleryImage {
   id: string;
@@ -35,10 +36,12 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   // Mobile hardware/gesture back button support
   useModalBackHandler(!!imageUrl, onClose, 'image-preview');
 
+  const { showToast } = useSocket();
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [scale, setScale] = useState<number>(1);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
 
   // Swipe-down to dismiss gesture
   const [translateY, setTranslateY] = useState<number>(0);
@@ -51,6 +54,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     if (!imageUrl) {
       setCurrentIndex(-1);
       setScale(1);
+      setImageError(false);
       return;
     }
 
@@ -61,6 +65,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
       setCurrentIndex(-1);
     }
     setScale(1);
+    setImageError(false);
     setTranslateY(0);
   }, [imageUrl, images]);
 
@@ -127,6 +132,9 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     try {
       setIsDownloading(true);
       const res = await fetch(targetUrl);
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
       const blob = await res.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -146,9 +154,27 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 2000);
-    } catch {
-      // Direct fallback if fetch/CORS is restricted
-      window.open(targetUrl, '_blank');
+    } catch (err: any) {
+      console.warn('Direct image download failed:', err);
+      if (err?.message?.includes('404') || err?.message?.includes('HTTP')) {
+        showToast('Image file is no longer reachable on the server', 'warning');
+      } else {
+        // Direct anchor tag fallback for cross-origin URLs
+        try {
+          const link = document.createElement('a');
+          link.href = targetUrl;
+          link.setAttribute('download', targetUrl.split('/').pop()?.split('?')[0] || `talk-cross-image-${Date.now()}.jpg`);
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setDownloadSuccess(true);
+          setTimeout(() => setDownloadSuccess(false), 2000);
+        } catch {
+          showToast('Failed to download image', 'warning');
+        }
+      }
     } finally {
       setIsDownloading(false);
     }
@@ -395,24 +421,50 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             </button>
           )}
 
-          {/* Centered Image */}
-          <img
-            key={activeImage.url}
-            src={activeImage.url}
-            alt="Preview"
-            style={{
-              maxWidth: '100%',
-              maxHeight: 'min(440px, 58vh)',
-              objectFit: 'contain',
-              borderRadius: '8px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
-              transform: `scale(${scale})`,
-              transition: isDragging ? 'none' : 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-              cursor: scale === 1 ? 'zoom-in' : 'zoom-out',
-              userSelect: 'none',
-            }}
-            draggable={false}
-          />
+          {/* Centered Image or Fallback */}
+          {imageError ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '36px 24px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                border: '1px dashed rgba(255, 255, 255, 0.2)',
+                color: 'rgba(255, 255, 255, 0.75)',
+                textAlign: 'center',
+                gap: '12px',
+                maxWidth: '380px',
+              }}
+            >
+              <ImageIcon size={40} style={{ opacity: 0.6 }} />
+              <div style={{ fontWeight: 600, color: '#ffffff', fontSize: '15px' }}>Photo Unavailable</div>
+              <div style={{ fontSize: '13px', lineHeight: 1.45, color: 'var(--text-muted)' }}>
+                This image was stored on a temporary server session and is no longer available.
+              </div>
+            </div>
+          ) : (
+            <img
+              key={activeImage.url}
+              src={activeImage.url}
+              alt="Preview"
+              onError={() => setImageError(true)}
+              style={{
+                maxWidth: '100%',
+                maxHeight: 'min(440px, 58vh)',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+                transform: `scale(${scale})`,
+                transition: isDragging ? 'none' : 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                cursor: scale === 1 ? 'zoom-in' : 'zoom-out',
+                userSelect: 'none',
+              }}
+              draggable={false}
+            />
+          )}
 
           {/* Navigation Next Button */}
           {hasMultiple && (
