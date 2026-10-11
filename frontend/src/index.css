@@ -1873,7 +1873,7 @@ input:focus, textarea:focus {
   line-height: 1.2;
 }
 
-/* Custom Chat Wallpaper State */
+/* Custom Chat Wallpaper State - Full-Height Immersive Background */
 .chat-wallpaper-layer {
   position: absolute;
   inset: 0;
@@ -1885,9 +1885,64 @@ input:focus, textarea:focus {
   transition: opacity 0.3s ease, background-image 0.3s ease;
 }
 
-.messages-container.has-custom-wallpaper {
+.chat-area.has-custom-wallpaper {
+  background-color: transparent !important;
+}
+
+.chat-area.has-custom-wallpaper .chat-header {
+  background-color: rgba(15, 15, 20, 0.38) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  z-index: 10;
+}
+
+.chat-area.has-custom-wallpaper .chat-composer {
+  background-color: rgba(15, 15, 20, 0.38) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  z-index: 20;
+}
+
+.chat-area.has-custom-wallpaper .composer-pill-box {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.chat-area.has-custom-wallpaper .reply-preview-bar {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.chat-area.has-custom-wallpaper .messages-thread-wrapper,
+.chat-area.has-custom-wallpaper .messages-container {
   background-color: transparent !important;
   background-image: none !important;
+}
+
+[data-theme='light'] .chat-area.has-custom-wallpaper .chat-header {
+  background-color: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
+}
+
+[data-theme='light'] .chat-area.has-custom-wallpaper .chat-composer {
+  background-color: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.07) !important;
+}
+
+[data-theme='light'] .chat-area.has-custom-wallpaper .composer-pill-box {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 @keyframes spin {

@@ -126,7 +126,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <main
-      className="chat-area"
+      className={`chat-area ${currentWallpaper ? 'has-custom-wallpaper' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -136,6 +136,23 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         transition: isSwipingBack && swipeDistanceX > 0 ? 'none' : 'transform 0.2s ease',
       }}
     >
+      {/* Immersive Full-Height Chat Wallpaper Layer (spans behind Header, Messages, and Composer) */}
+      {currentWallpaper && (
+        <div
+          className="chat-wallpaper-layer full-chat-wallpaper"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `linear-gradient(rgba(10, 10, 14, ${currentWallpaper.overlayDim ?? 0.65}), rgba(10, 10, 14, ${currentWallpaper.overlayDim ?? 0.65})), url("${currentWallpaper.dataUrl}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+      )}
+
       {/* Visual Swipe-Back floating hint indicator on mobile */}
       {swipeDistanceX > 25 && (
         <div

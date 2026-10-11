@@ -76,23 +76,6 @@ export const MessageList: React.FC<MessageListProps> = ({ onOpenImage }) => {
         overflow: 'hidden',
       }}
     >
-      {/* Fixed Wallpaper Backdrop Layer: stays crisp, properly scaled, and fixed behind message bubbles */}
-      {wallpaper && (
-        <div
-          className="chat-wallpaper-layer"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `linear-gradient(rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65}), rgba(10, 10, 14, ${wallpaper.overlayDim ?? 0.65})), url("${wallpaper.dataUrl}")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
-      )}
-
       {/* Scrollable Messages Container */}
       <div
         ref={containerRef}
